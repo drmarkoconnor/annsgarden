@@ -26,6 +26,10 @@ export type PlantHealthStatus =
   | "removed_dead"
   | "unknown";
 
+export type PestDiseaseIssueType = "pest" | "disease" | "animal" | "unknown";
+
+export type PestDiseaseSeverity = "low" | "medium" | "high" | "unknown";
+
 export type GardenArea = {
   id: string;
   name: string;
@@ -139,4 +143,36 @@ export type GardenPhoto = {
   samePositionNote?: string;
   comparisonGroupId?: string;
   placeholderTone?: "leaf" | "rose" | "shade" | "orchard" | "soil";
+};
+
+export type PestDiseaseIssue = {
+  id: string;
+  name: string;
+  issueType: PestDiseaseIssueType;
+  description: string;
+  symptoms: string;
+  affectedPlants: string;
+  likelyMonths: number[];
+  preventionNote: string;
+  organicTreatmentNote: string;
+  chemicalCautionNote: string;
+  severity: PestDiseaseSeverity;
+  whenToSeekHelp: string;
+  externalUrl?: string;
+};
+
+export type PestDiseaseLog = {
+  id: string;
+  issueId: string;
+  issueName: string;
+  issueType: PestDiseaseIssueType;
+  areaId?: string;
+  areaName?: string;
+  plantId?: string;
+  plantName?: string;
+  observedAt: string;
+  observedBy?: string;
+  observedById?: string;
+  severity: PestDiseaseSeverity;
+  note?: string;
 };

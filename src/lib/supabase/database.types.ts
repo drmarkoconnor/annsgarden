@@ -457,6 +457,13 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "photos_pest_disease_issue_id_fkey";
+            columns: ["pest_disease_issue_id"];
+            isOneToOne: false;
+            referencedRelation: "pest_disease_issues";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "photos_task_instance_id_fkey";
             columns: ["task_instance_id"];
             isOneToOne: false;
@@ -468,6 +475,145 @@ export type Database = {
             columns: ["uploaded_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pest_disease_issues: {
+        Row: {
+          affected_plants: string | null;
+          chemical_caution_note: string | null;
+          created_at: string;
+          description: string | null;
+          external_url: string | null;
+          id: string;
+          issue_type: "pest" | "disease" | "animal" | "unknown";
+          likely_months: number[];
+          name: string;
+          organic_treatment_note: string | null;
+          prevention_note: string | null;
+          severity: "low" | "medium" | "high" | "unknown";
+          symptoms: string | null;
+          updated_at: string;
+          when_to_seek_help: string | null;
+        };
+        Insert: {
+          affected_plants?: string | null;
+          chemical_caution_note?: string | null;
+          created_at?: string;
+          description?: string | null;
+          external_url?: string | null;
+          id?: string;
+          issue_type?: "pest" | "disease" | "animal" | "unknown";
+          likely_months?: number[];
+          name: string;
+          organic_treatment_note?: string | null;
+          prevention_note?: string | null;
+          severity?: "low" | "medium" | "high" | "unknown";
+          symptoms?: string | null;
+          updated_at?: string;
+          when_to_seek_help?: string | null;
+        };
+        Update: {
+          affected_plants?: string | null;
+          chemical_caution_note?: string | null;
+          created_at?: string;
+          description?: string | null;
+          external_url?: string | null;
+          id?: string;
+          issue_type?: "pest" | "disease" | "animal" | "unknown";
+          likely_months?: number[];
+          name?: string;
+          organic_treatment_note?: string | null;
+          prevention_note?: string | null;
+          severity?: "low" | "medium" | "high" | "unknown";
+          symptoms?: string | null;
+          updated_at?: string;
+          when_to_seek_help?: string | null;
+        };
+        Relationships: [];
+      };
+      pest_disease_logs: {
+        Row: {
+          area_id: string | null;
+          created_at: string;
+          follow_up_task_id: string | null;
+          garden_id: string;
+          id: string;
+          issue_id: string;
+          note: string | null;
+          observed_at: string;
+          observed_by: string | null;
+          plant_id: string | null;
+          severity: "low" | "medium" | "high" | "unknown";
+        };
+        Insert: {
+          area_id?: string | null;
+          created_at?: string;
+          follow_up_task_id?: string | null;
+          garden_id: string;
+          id?: string;
+          issue_id: string;
+          note?: string | null;
+          observed_at?: string;
+          observed_by?: string | null;
+          plant_id?: string | null;
+          severity?: "low" | "medium" | "high" | "unknown";
+        };
+        Update: {
+          area_id?: string | null;
+          created_at?: string;
+          follow_up_task_id?: string | null;
+          garden_id?: string;
+          id?: string;
+          issue_id?: string;
+          note?: string | null;
+          observed_at?: string;
+          observed_by?: string | null;
+          plant_id?: string | null;
+          severity?: "low" | "medium" | "high" | "unknown";
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pest_disease_logs_area_id_fkey";
+            columns: ["area_id"];
+            isOneToOne: false;
+            referencedRelation: "garden_areas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pest_disease_logs_follow_up_task_id_fkey";
+            columns: ["follow_up_task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pest_disease_logs_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pest_disease_logs_issue_id_fkey";
+            columns: ["issue_id"];
+            isOneToOne: false;
+            referencedRelation: "pest_disease_issues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pest_disease_logs_observed_by_fkey";
+            columns: ["observed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pest_disease_logs_plant_id_fkey";
+            columns: ["plant_id"];
+            isOneToOne: false;
+            referencedRelation: "plants";
             referencedColumns: ["id"];
           },
         ];

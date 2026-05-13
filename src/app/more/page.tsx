@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CategoryForm } from "@/components/admin/category-form";
 import { ConfirmActionForm } from "@/components/confirm-action-form";
@@ -62,6 +63,29 @@ export default async function MorePage({
               </button>
             </form>
           </div>
+        </section>
+
+        <section className="space-y-3">
+          <SectionHeader title="Garden watch" count={1} />
+          <Link
+            className="block rounded-lg border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+            href="/more/pest-watch"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-stone-500">Phase 9</p>
+                <h2 className="mt-1 text-base font-semibold text-stone-950">
+                  Pest & disease watch
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  Seasonal issue cards, inspection tasks and observation notes.
+                </p>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+                Open
+              </span>
+            </div>
+          </Link>
         </section>
 
         <section className="space-y-3">
