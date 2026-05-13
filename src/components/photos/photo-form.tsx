@@ -8,7 +8,7 @@ type PhotoFormProps = {
 
 export function PhotoForm({ options }: PhotoFormProps) {
   return (
-    <form action={createPhoto} encType="multipart/form-data" className="space-y-4">
+    <form action={createPhoto} className="space-y-4">
       <Field label="Photo" name="photo" type="file" accept="image/*" required />
       <Field label="Caption" name="caption" />
 
