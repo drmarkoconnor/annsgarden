@@ -40,6 +40,7 @@ export type Database = {
           name?: string;
           type?: "plant" | "task" | "diary" | "photo";
         };
+        Relationships: [];
       };
       garden_areas: {
         Row: {
@@ -90,6 +91,15 @@ export type Database = {
           sunlight?: string | null;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "garden_areas_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       gardens: {
         Row: {
@@ -122,6 +132,7 @@ export type Database = {
           notes?: string | null;
           region?: string | null;
         };
+        Relationships: [];
       };
       plants: {
         Row: {
@@ -205,6 +216,22 @@ export type Database = {
           updated_at?: string;
           watering_notes?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "plants_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plants_primary_area_id_fkey";
+            columns: ["primary_area_id"];
+            isOneToOne: false;
+            referencedRelation: "garden_areas";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       profiles: {
         Row: {
@@ -231,6 +258,7 @@ export type Database = {
           id?: string;
           role?: "owner" | "gardener" | "helper";
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

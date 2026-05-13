@@ -50,6 +50,8 @@ export type Plant = {
   healthStatus: PlantHealthStatus;
   notes: string;
   isUnknown?: boolean;
+  status?: "active" | "removed" | "dead" | "unknown";
+  archivedAt?: string | null;
 };
 
 export type GardenTask = {
