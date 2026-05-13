@@ -363,6 +363,115 @@ export type Database = {
           },
         ];
       };
+      photos: {
+        Row: {
+          area_id: string | null;
+          caption: string | null;
+          comparison_group_id: string | null;
+          created_at: string;
+          diary_entry_id: string | null;
+          garden_id: string;
+          id: string;
+          original_storage_path: string | null;
+          pest_disease_issue_id: string | null;
+          plant_id: string | null;
+          same_position_note: string | null;
+          storage_path: string | null;
+          tags: string[];
+          taken_at: string;
+          task_instance_id: string | null;
+          thumbnail_path: string | null;
+          updated_at: string;
+          uploaded_at: string;
+          uploaded_by: string | null;
+        };
+        Insert: {
+          area_id?: string | null;
+          caption?: string | null;
+          comparison_group_id?: string | null;
+          created_at?: string;
+          diary_entry_id?: string | null;
+          garden_id: string;
+          id?: string;
+          original_storage_path?: string | null;
+          pest_disease_issue_id?: string | null;
+          plant_id?: string | null;
+          same_position_note?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          taken_at?: string;
+          task_instance_id?: string | null;
+          thumbnail_path?: string | null;
+          updated_at?: string;
+          uploaded_at?: string;
+          uploaded_by?: string | null;
+        };
+        Update: {
+          area_id?: string | null;
+          caption?: string | null;
+          comparison_group_id?: string | null;
+          created_at?: string;
+          diary_entry_id?: string | null;
+          garden_id?: string;
+          id?: string;
+          original_storage_path?: string | null;
+          pest_disease_issue_id?: string | null;
+          plant_id?: string | null;
+          same_position_note?: string | null;
+          storage_path?: string | null;
+          tags?: string[];
+          taken_at?: string;
+          task_instance_id?: string | null;
+          thumbnail_path?: string | null;
+          updated_at?: string;
+          uploaded_at?: string;
+          uploaded_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photos_area_id_fkey";
+            columns: ["area_id"];
+            isOneToOne: false;
+            referencedRelation: "garden_areas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_diary_entry_id_fkey";
+            columns: ["diary_entry_id"];
+            isOneToOne: false;
+            referencedRelation: "diary_entries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_plant_id_fkey";
+            columns: ["plant_id"];
+            isOneToOne: false;
+            referencedRelation: "plants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_task_instance_id_fkey";
+            columns: ["task_instance_id"];
+            isOneToOne: false;
+            referencedRelation: "task_instances";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photos_uploaded_by_fkey";
+            columns: ["uploaded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       task_completions: {
         Row: {
           completed_at: string;

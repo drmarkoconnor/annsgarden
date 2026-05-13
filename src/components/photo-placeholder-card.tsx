@@ -1,6 +1,9 @@
+import Image from "next/image";
 import type { GardenPhoto } from "@/types/garden";
 
-const toneStyles: Record<GardenPhoto["placeholderTone"], string> = {
+type PlaceholderTone = NonNullable<GardenPhoto["placeholderTone"]>;
+
+const toneStyles: Record<PlaceholderTone, string> = {
   leaf: "from-emerald-200 via-lime-100 to-stone-100",
   rose: "from-rose-200 via-pink-100 to-stone-100",
   shade: "from-slate-200 via-teal-100 to-stone-100",
@@ -21,19 +24,36 @@ export function PhotoPlaceholderCard({
   plantName,
   compact = false,
 }: PhotoPlaceholderCardProps) {
+  const area = areaName ?? photo.areaName;
+  const plant = plantName ?? photo.plantName;
+  const tone: PlaceholderTone = photo.placeholderTone ?? "leaf";
+
   return (
     <article className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
-      <div
-        className={[
-          "flex items-end bg-gradient-to-br p-4",
-          compact ? "h-28" : "h-40",
-          toneStyles[photo.placeholderTone],
-        ].join(" ")}
-      >
-        <span className="rounded-full bg-white/85 px-2.5 py-1 text-xs font-medium text-stone-700">
-          Photo placeholder
-        </span>
-      </div>
+      {photo.imageUrl ? (
+        <div className={["relative w-full", compact ? "h-28" : "h-48"].join(" ")}>
+          <Image
+            alt={photo.caption}
+            className="object-cover"
+            fill
+            sizes={compact ? "50vw" : "100vw"}
+            src={photo.imageUrl}
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div
+          className={[
+            "flex items-end bg-gradient-to-br p-4",
+            compact ? "h-28" : "h-40",
+            toneStyles[tone],
+          ].join(" ")}
+        >
+          <span className="rounded-full bg-white/85 px-2.5 py-1 text-xs font-medium text-stone-700">
+            Photo pending
+          </span>
+        </div>
+      )}
       <div className="p-4">
         <p className="text-xs font-medium text-stone-500">
           {photo.takenAt} by {photo.uploadedBy}
@@ -42,13 +62,38 @@ export function PhotoPlaceholderCard({
           {photo.caption}
         </h3>
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-stone-600">
-          {areaName ? (
-            <span className="rounded-full bg-stone-100 px-2.5 py-1">{areaName}</span>
+          {area ? (
+            <span className="rounded-full bg-stone-100 px-2.5 py-1">{area}</span>
           ) : null}
-          {plantName ? (
-            <span className="rounded-full bg-stone-100 px-2.5 py-1">{plantName}</span>
+          {plant ? (
+            <span className="rounded-full bg-stone-100 px-2.5 py-1">{plant}</span>
           ) : null}
+          {photo.taskName ? (
+            <span className="rounded-full bg-stone-100 px-2.5 py-1">
+              {photo.taskName}
+            </span>
+          ) : null}
+          {photo.diaryEntryTitle ? (
+            <span className="rounded-full bg-stone-100 px-2.5 py-1">
+              {photo.diaryEntryTitle}
+            </span>
+          ) : null}
+          {photo.comparisonGroupId ? (
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800">
+              {photo.comparisonGroupId}
+            </span>
+          ) : null}
+          {photo.tags.map((tag) => (
+            <span key={tag} className="rounded-full bg-stone-100 px-2.5 py-1">
+              {tag}
+            </span>
+          ))}
         </div>
+        {photo.samePositionNote ? (
+          <p className="mt-3 text-sm leading-6 text-stone-600">
+            {photo.samePositionNote}
+          </p>
+        ) : null}
       </div>
     </article>
   );

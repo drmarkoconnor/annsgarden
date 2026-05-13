@@ -1,0 +1,173 @@
+import { createPhoto } from "@/lib/photos/actions";
+import type { PhotoFormOptions } from "@/lib/photos/data";
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+
+type PhotoFormProps = {
+  options: PhotoFormOptions;
+};
+
+export function PhotoForm({ options }: PhotoFormProps) {
+  return (
+    <form action={createPhoto} encType="multipart/form-data" className="space-y-4">
+      <Field label="Photo" name="photo" type="file" accept="image/*" required />
+      <Field label="Caption" name="caption" />
+
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Taken" name="taken_at" type="date" defaultValue={todayIsoDate()} />
+        <Select label="By" name="uploaded_by" defaultValue="none">
+          <option value="none">No one selected</option>
+          {options.profiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>
+              {profile.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      <Select label="Area" name="area_id" defaultValue="none">
+        <option value="none">No area</option>
+        {options.areas.map((area) => (
+          <option key={area.id} value={area.id}>
+            {area.name}
+          </option>
+        ))}
+      </Select>
+
+      <details className="rounded-md border border-stone-200 bg-white p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-stone-900">
+          More links
+        </summary>
+        <div className="mt-3 space-y-3">
+          <Select label="Plant" name="plant_id" defaultValue="none">
+            <option value="none">No plant</option>
+            {options.plants.map((plant) => (
+              <option key={plant.id} value={plant.id}>
+                {plant.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select label="Task" name="task_instance_id" defaultValue="none">
+            <option value="none">No task</option>
+            {options.tasks.map((task) => (
+              <option key={task.id} value={task.id}>
+                {task.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select label="Diary note" name="diary_entry_id" defaultValue="none">
+            <option value="none">No diary note</option>
+            {options.diaryEntries.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </details>
+
+      <details className="rounded-md border border-stone-200 bg-white p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-stone-900">
+          Compare
+        </summary>
+        <div className="mt-3 space-y-3">
+          <Field label="Comparison group" name="comparison_group_id" />
+          <TextArea label="Same position note" name="same_position_note" />
+        </div>
+      </details>
+
+      <Field label="Tags" name="tags" placeholder="flowering, border gap" />
+
+      <button
+        type="submit"
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+      >
+        Save photo
+      </button>
+    </form>
+  );
+}
+
+function Field({
+  label,
+  name,
+  type = "text",
+  ...props
+}: {
+  label: string;
+  name: string;
+  type?: string;
+} & InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <label className="block text-sm font-medium text-stone-700">
+      {label}
+      <input
+        name={name}
+        type={type}
+        className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm"
+        {...props}
+      />
+    </label>
+  );
+}
+
+function TextArea({
+  label,
+  name,
+  ...props
+}: {
+  label: string;
+  name: string;
+} & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <label className="block text-sm font-medium text-stone-700">
+      {label}
+      <textarea
+        name={name}
+        rows={2}
+        className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm"
+        {...props}
+      />
+    </label>
+  );
+}
+
+function Select({
+  children,
+  label,
+  name,
+  defaultValue,
+}: {
+  children: ReactNode;
+  label: string;
+  name: string;
+  defaultValue?: string;
+}) {
+  return (
+    <label className="block text-sm font-medium text-stone-700">
+      {label}
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+function todayIsoDate() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Europe/London",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  const month = parts.find((part) => part.type === "month")?.value ?? "05";
+  const year = parts.find((part) => part.type === "year")?.value ?? "2026";
+
+  return `${year}-${month}-${day}`;
+}
