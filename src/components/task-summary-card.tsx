@@ -15,7 +15,7 @@ export function TaskSummaryCard({
     <article className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <span className={`h-2.5 w-2.5 rounded-full ${accent}`} aria-hidden="true" />
-        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+        <p className="text-xs font-semibold uppercase tracking-normal text-stone-500">
           {eyebrow}
         </p>
       </div>
