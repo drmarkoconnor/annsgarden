@@ -11,13 +11,17 @@ type PhotoGalleryView = "timeline" | "area" | "plant";
 
 export type PhotoFilterParams = {
   area?: string;
+  compareA?: string;
+  compareB?: string;
   plant?: string;
   q?: string;
   view?: string;
 };
 
-type PhotoFilters = {
+export type PhotoFilters = {
   areaId: string;
+  compareAId: string;
+  compareBId: string;
   plantId: string;
   query: string;
   view: PhotoGalleryView;
@@ -29,6 +33,8 @@ export function normalisePhotoFilters(params: PhotoFilterParams): PhotoFilters {
 
   return {
     areaId: params.area ?? "all",
+    compareAId: params.compareA ?? "",
+    compareBId: params.compareB ?? "",
     plantId: params.plant ?? "all",
     query: params.q?.trim() ?? "",
     view,
@@ -66,6 +72,30 @@ export function photoMatchesFilters(photo: GardenPhoto, filters: PhotoFilters) {
   return searchText.includes(filters.query.toLowerCase());
 }
 
+export function getSelectedComparisonPhotos(
+  photos: GardenPhoto[],
+  filters: PhotoFilters,
+) {
+  const selectedIds = [filters.compareAId, filters.compareBId].filter(Boolean);
+  const uniqueIds = Array.from(new Set(selectedIds));
+
+  return uniqueIds
+    .map((id) => photos.find((photo) => photo.id === id))
+    .filter((photo): photo is GardenPhoto => Boolean(photo));
+}
+
+export function hasSelectedPhotoComparison(filters: PhotoFilters) {
+  return Boolean(filters.compareAId || filters.compareBId);
+}
+
+export function clearComparisonHref(filters: PhotoFilters) {
+  return hrefFromFilters({
+    ...filters,
+    compareAId: "",
+    compareBId: "",
+  });
+}
+
 export function PhotoGalleryFilters({
   filters,
   options,
@@ -98,6 +128,12 @@ export function PhotoGalleryFilters({
 
       <form className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
         <input name="view" type="hidden" value={filters.view} />
+        {filters.compareAId ? (
+          <input name="compareA" type="hidden" value={filters.compareAId} />
+        ) : null}
+        {filters.compareBId ? (
+          <input name="compareB" type="hidden" value={filters.compareBId} />
+        ) : null}
         <div className="space-y-3">
           <label className="block text-sm font-medium text-stone-700">
             Search photos
@@ -135,7 +171,7 @@ export function PhotoGalleryFilters({
             <div className="flex gap-2">
               <Link
                 className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700"
-                href="/photos"
+                href={clearFilterHref(filters)}
               >
                 Clear
               </Link>
@@ -174,6 +210,7 @@ export function PhotoGallery({
   if (filters.view === "area") {
     return (
       <GroupedPhotoGallery
+        filters={filters}
         groups={groupPhotos(photos, (photo) => photo.areaName ?? "No area")}
         options={options}
         title="Photos by area"
@@ -184,6 +221,7 @@ export function PhotoGallery({
   if (filters.view === "plant") {
     return (
       <GroupedPhotoGallery
+        filters={filters}
         groups={groupPhotos(photos, (photo) => photo.plantName ?? "No plant")}
         options={options}
         title="Photos by plant"
@@ -197,7 +235,7 @@ export function PhotoGallery({
       <div className="space-y-3">
         {photos.map((photo) => (
           <PhotoPlaceholderCard key={photo.id} photo={photo}>
-            <PhotoControls photo={photo} options={options} />
+            <PhotoControls filters={filters} photo={photo} options={options} />
           </PhotoPlaceholderCard>
         ))}
       </div>
@@ -231,10 +269,12 @@ function SelectFilter({
 }
 
 function GroupedPhotoGallery({
+  filters,
   groups,
   options,
   title,
 }: {
+  filters: PhotoFilters;
   groups: Map<string, GardenPhoto[]>;
   options: PhotoFormOptions;
   title: string;
@@ -253,7 +293,7 @@ function GroupedPhotoGallery({
           <div className="space-y-3">
             {photos.map((photo) => (
               <PhotoPlaceholderCard key={photo.id} photo={photo}>
-                <PhotoControls photo={photo} options={options} />
+                <PhotoControls filters={filters} photo={photo} options={options} />
               </PhotoPlaceholderCard>
             ))}
           </div>
@@ -264,14 +304,44 @@ function GroupedPhotoGallery({
 }
 
 function PhotoControls({
+  filters,
   options,
   photo,
 }: {
+  filters: PhotoFilters;
   options: PhotoFormOptions;
   photo: GardenPhoto;
 }) {
+  const isLeft = filters.compareAId === photo.id;
+  const isRight = filters.compareBId === photo.id;
+
   return (
     <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Link
+          className={[
+            "rounded-md px-3 py-2 text-center text-sm font-semibold",
+            isLeft
+              ? "bg-emerald-700 text-white"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-800",
+          ].join(" ")}
+          href={comparisonHref(filters, photo.id, "compareA")}
+        >
+          {isLeft ? "Left photo" : "Set left"}
+        </Link>
+        <Link
+          className={[
+            "rounded-md px-3 py-2 text-center text-sm font-semibold",
+            isRight
+              ? "bg-emerald-700 text-white"
+              : "border border-emerald-200 bg-emerald-50 text-emerald-800",
+          ].join(" ")}
+          href={comparisonHref(filters, photo.id, "compareB")}
+        >
+          {isRight ? "Right photo" : "Set right"}
+        </Link>
+      </div>
+
       <details>
         <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
           Edit photo
@@ -298,10 +368,35 @@ function PhotoControls({
 }
 
 function galleryHref(filters: PhotoFilters, view: PhotoGalleryView) {
+  return hrefFromFilters({ ...filters, view });
+}
+
+function comparisonHref(
+  filters: PhotoFilters,
+  photoId: string,
+  slot: "compareA" | "compareB",
+) {
+  return hrefFromFilters({
+    ...filters,
+    compareAId: slot === "compareA" ? photoId : filters.compareAId,
+    compareBId: slot === "compareB" ? photoId : filters.compareBId,
+  });
+}
+
+function clearFilterHref(filters: PhotoFilters) {
+  return hrefFromFilters({
+    ...filters,
+    areaId: "all",
+    plantId: "all",
+    query: "",
+  });
+}
+
+function hrefFromFilters(filters: PhotoFilters) {
   const params = new URLSearchParams();
 
-  if (view !== "timeline") {
-    params.set("view", view);
+  if (filters.view !== "timeline") {
+    params.set("view", filters.view);
   }
 
   if (filters.query) {
@@ -314,6 +409,14 @@ function galleryHref(filters: PhotoFilters, view: PhotoGalleryView) {
 
   if (filters.plantId !== "all") {
     params.set("plant", filters.plantId);
+  }
+
+  if (filters.compareAId) {
+    params.set("compareA", filters.compareAId);
+  }
+
+  if (filters.compareBId) {
+    params.set("compareB", filters.compareBId);
   }
 
   const query = params.toString();

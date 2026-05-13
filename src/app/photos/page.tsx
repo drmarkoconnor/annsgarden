@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import {
   PhotoGallery,
   PhotoGalleryFilters,
+  clearComparisonHref,
+  getSelectedComparisonPhotos,
+  hasSelectedPhotoComparison,
   normalisePhotoFilters,
   photoMatchesFilters,
   type PhotoFilterParams,
@@ -27,6 +31,15 @@ export default async function PhotosPage({
   const { comparisonPhotos, formOptions, photos } = await getPhotoData();
   const filters = normalisePhotoFilters(notices);
   const filteredPhotos = photos.filter((photo) => photoMatchesFilters(photo, filters));
+  const selectedComparisonPhotos = getSelectedComparisonPhotos(photos, filters);
+  const isManualComparison = hasSelectedPhotoComparison(filters);
+  const comparisonPhotosToShow = isManualComparison
+    ? selectedComparisonPhotos
+    : comparisonPhotos;
+  const singleSelectedComparisonPhoto =
+    isManualComparison && selectedComparisonPhotos.length === 1
+      ? selectedComparisonPhotos[0]
+      : undefined;
 
   return (
     <AppShell activeItem="photos">
@@ -53,20 +66,35 @@ export default async function PhotosPage({
         />
 
         <section className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold text-stone-950">Compare</h2>
-            <p className="text-sm leading-6 text-stone-600">
-              Same-position or before/after pairs can sit side by side.
-            </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-stone-950">Compare</h2>
+              <p className="text-sm leading-6 text-stone-600">
+                Choose a left and right photo from the gallery.
+              </p>
+            </div>
+            {isManualComparison ? (
+              <Link
+                className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700"
+                href={clearComparisonHref(filters)}
+              >
+                Clear
+              </Link>
+            ) : null}
           </div>
-          {comparisonPhotos.length >= 2 ? (
+          {singleSelectedComparisonPhoto ? (
             <div className="grid grid-cols-2 gap-3">
-              {comparisonPhotos.map((photo) => (
+              <PhotoPlaceholderCard photo={singleSelectedComparisonPhoto} compact />
+              <EmptyState text="Choose a second photo." />
+            </div>
+          ) : comparisonPhotosToShow.length >= 2 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {comparisonPhotosToShow.slice(0, 2).map((photo) => (
                 <PhotoPlaceholderCard key={photo.id} photo={photo} compact />
               ))}
             </div>
           ) : (
-            <EmptyState text="Add two photos with the same comparison group to see them together." />
+            <EmptyState text="Set a left and right photo from the gallery to compare them." />
           )}
         </section>
 
