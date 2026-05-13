@@ -1,15 +1,73 @@
+"use client";
+
 import { createPhoto } from "@/lib/photos/actions";
 import type { PhotoFormOptions } from "@/lib/photos/data";
-import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+import {
+  useState,
+  type FormEvent,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from "react";
 
 type PhotoFormProps = {
   options: PhotoFormOptions;
 };
 
+const targetUploadBytes = 900 * 1024;
+const resizeEdges = [1600, 1400, 1200];
+const resizeQualities = [0.84, 0.76, 0.68, 0.6];
+
 export function PhotoForm({ options }: PhotoFormProps) {
+  const [photoStatus, setPhotoStatus] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+
+    if (form.dataset.photoReady === "true") {
+      delete form.dataset.photoReady;
+      return;
+    }
+
+    const input = form.elements.namedItem("photo");
+
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const file = input.files?.[0];
+
+    if (!file || !file.type.startsWith("image/") || file.size <= targetUploadBytes) {
+      return;
+    }
+
+    event.preventDefault();
+    setPhotoStatus("Preparing photo...");
+
+    try {
+      const resized = await resizePhoto(file);
+
+      if (resized && resized.size < file.size) {
+        const transfer = new DataTransfer();
+        transfer.items.add(resized);
+        input.files = transfer.files;
+      }
+
+      form.dataset.photoReady = "true";
+      form.requestSubmit();
+    } catch {
+      setPhotoStatus("Photo could not be reduced. Sending the original.");
+      form.dataset.photoReady = "true";
+      form.requestSubmit();
+    }
+  }
+
   return (
-    <form action={createPhoto} className="space-y-4">
+    <form action={createPhoto} className="space-y-4" onSubmit={handleSubmit}>
       <Field label="Photo" name="photo" type="file" accept="image/*" required />
+      {photoStatus ? (
+        <p className="text-sm leading-6 text-stone-600">{photoStatus}</p>
+      ) : null}
       <Field label="Caption" name="caption" />
 
       <div className="grid grid-cols-2 gap-2">
@@ -170,4 +228,86 @@ function todayIsoDate() {
   const year = parts.find((part) => part.type === "year")?.value ?? "2026";
 
   return `${year}-${month}-${day}`;
+}
+
+async function resizePhoto(file: File) {
+  const image = await loadImage(file);
+  let bestBlob: Blob | null = null;
+
+  for (const edge of resizeEdges) {
+    const canvas = drawImageToCanvas(image, edge);
+
+    for (const quality of resizeQualities) {
+      const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+
+      if (!bestBlob || blob.size < bestBlob.size) {
+        bestBlob = blob;
+      }
+
+      if (blob.size <= targetUploadBytes) {
+        return blobToFile(blob, file);
+      }
+    }
+  }
+
+  return bestBlob && bestBlob.size < file.size ? blobToFile(bestBlob, file) : null;
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not load image."));
+    };
+    image.src = url;
+  });
+}
+
+function drawImageToCanvas(image: HTMLImageElement, maxEdge: number) {
+  const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvas is unavailable.");
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+
+  return canvas;
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Could not resize image."));
+        }
+      },
+      type,
+      quality,
+    );
+  });
+}
+
+function blobToFile(blob: Blob, originalFile: File) {
+  const baseName = originalFile.name.replace(/\.[^.]+$/, "") || "garden-photo";
+  return new File([blob], `${baseName}.jpg`, {
+    lastModified: Date.now(),
+    type: "image/jpeg",
+  });
 }
