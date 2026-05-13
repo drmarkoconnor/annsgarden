@@ -121,6 +121,8 @@ Build:
 
 - search
 - filters
+- photo gallery views by timeline, area and plant
+- selectable photo comparison pairs
 - saved filters if needed
 - hidden tasks
 - category management

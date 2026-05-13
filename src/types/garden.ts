@@ -121,8 +121,10 @@ export type GardenPhoto = {
   id: string;
   caption: string;
   takenAt: string;
+  takenAtValue?: string;
   uploadedAt?: string;
   uploadedBy: string;
+  uploadedById?: string;
   areaId?: string;
   areaName?: string;
   plantId?: string;

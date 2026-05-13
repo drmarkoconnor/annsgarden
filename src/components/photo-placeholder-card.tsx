@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import type { GardenPhoto } from "@/types/garden";
 
 type PlaceholderTone = NonNullable<GardenPhoto["placeholderTone"]>;
@@ -14,6 +15,7 @@ const toneStyles: Record<PlaceholderTone, string> = {
 type PhotoPlaceholderCardProps = {
   photo: GardenPhoto;
   areaName?: string;
+  children?: ReactNode;
   plantName?: string;
   compact?: boolean;
 };
@@ -21,6 +23,7 @@ type PhotoPlaceholderCardProps = {
 export function PhotoPlaceholderCard({
   photo,
   areaName,
+  children,
   plantName,
   compact = false,
 }: PhotoPlaceholderCardProps) {
@@ -93,6 +96,9 @@ export function PhotoPlaceholderCard({
           <p className="mt-3 text-sm leading-6 text-stone-600">
             {photo.samePositionNote}
           </p>
+        ) : null}
+        {children ? (
+          <div className="mt-4 border-t border-stone-100 pt-4">{children}</div>
         ) : null}
       </div>
     </article>

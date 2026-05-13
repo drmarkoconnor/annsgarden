@@ -193,10 +193,12 @@ async function mapPhoto({
     storagePath: photo.storage_path ?? undefined,
     tags: photo.tags,
     takenAt: formatDate(photo.taken_at),
+    takenAtValue: photo.taken_at,
     taskId: photo.task_instance_id ?? undefined,
     taskName: task?.title,
     uploadedAt: photo.uploaded_at,
     uploadedBy: profile?.display_name ?? "Unknown",
+    uploadedById: photo.uploaded_by ?? undefined,
   };
 }
 

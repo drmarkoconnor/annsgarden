@@ -8,6 +8,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
 type PhotoInsert = Database["public"]["Tables"]["photos"]["Insert"];
+type PhotoUpdate = Database["public"]["Tables"]["photos"]["Update"];
 
 const maxUploadBytes = 10 * 1024 * 1024;
 const supportedTypes = new Set([
@@ -71,6 +72,65 @@ export async function createPhoto(formData: FormData) {
 
   revalidatePath("/photos");
   redirect("/photos?saved=1");
+}
+
+export async function updatePhoto(photoId: string, formData: FormData) {
+  const payload: PhotoUpdate = {
+    area_id: optionalUuid(formData, "area_id"),
+    caption: optionalText(formData, "caption"),
+    comparison_group_id: optionalText(formData, "comparison_group_id"),
+    diary_entry_id: optionalUuid(formData, "diary_entry_id"),
+    plant_id: optionalUuid(formData, "plant_id"),
+    same_position_note: optionalText(formData, "same_position_note"),
+    tags: optionalList(formData, "tags") ?? [],
+    taken_at: optionalText(formData, "taken_at") ?? todayIsoDate(),
+    task_instance_id: optionalUuid(formData, "task_instance_id"),
+    uploaded_by: optionalUuid(formData, "uploaded_by"),
+  };
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("photos")
+    .update(payload)
+    .eq("id", photoId)
+    .eq("garden_id", ANN_GARDEN_ID);
+
+  if (error) {
+    redirect("/photos?photoError=save-failed");
+  }
+
+  revalidatePath("/photos");
+  redirect("/photos?saved=1");
+}
+
+export async function deletePhoto(photoId: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: photo, error: readError } = await supabase
+    .from("photos")
+    .select("storage_path")
+    .eq("id", photoId)
+    .eq("garden_id", ANN_GARDEN_ID)
+    .single();
+
+  if (readError) {
+    redirect("/photos?photoError=delete-failed");
+  }
+
+  const { error: deleteError } = await supabase
+    .from("photos")
+    .delete()
+    .eq("id", photoId)
+    .eq("garden_id", ANN_GARDEN_ID);
+
+  if (deleteError) {
+    redirect("/photos?photoError=delete-failed");
+  }
+
+  if (photo.storage_path) {
+    await supabase.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
+  }
+
+  revalidatePath("/photos");
+  redirect("/photos?deleted=1");
 }
 
 function storagePathFor(file: File) {
