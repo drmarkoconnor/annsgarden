@@ -159,6 +159,8 @@ Build lightweight pest/disease support:
 
 Improve:
 
+- password reset flow
+- sign-out discoverability
 - mobile usability
 - form length
 - speed
