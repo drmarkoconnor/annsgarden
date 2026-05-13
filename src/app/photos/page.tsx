@@ -1,16 +1,18 @@
 import { AppShell } from "@/components/app-shell";
-import { ConfirmActionForm } from "@/components/confirm-action-form";
-import { PhotoEditForm } from "@/components/photos/photo-edit-form";
+import {
+  PhotoGallery,
+  PhotoGalleryFilters,
+  normalisePhotoFilters,
+  photoMatchesFilters,
+  type PhotoFilterParams,
+} from "@/components/photos/photo-gallery";
 import { PhotoForm } from "@/components/photos/photo-form";
 import { PhotoPlaceholderCard } from "@/components/photo-placeholder-card";
-import { deletePhoto } from "@/lib/photos/actions";
 import { getPhotoData } from "@/lib/photos/data";
-import type { PhotoFormOptions } from "@/lib/photos/data";
-import type { GardenPhoto } from "@/types/garden";
 
 export const dynamic = "force-dynamic";
 
-type PhotoSearchParams = {
+type PhotoSearchParams = PhotoFilterParams & {
   deleted?: string;
   photoError?: string;
   saved?: string;
@@ -23,6 +25,8 @@ export default async function PhotosPage({
 }) {
   const notices = searchParams ? await searchParams : {};
   const { comparisonPhotos, formOptions, photos } = await getPhotoData();
+  const filters = normalisePhotoFilters(notices);
+  const filteredPhotos = photos.filter((photo) => photoMatchesFilters(photo, filters));
 
   return (
     <AppShell activeItem="photos">
@@ -40,6 +44,13 @@ export default async function PhotosPage({
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
           <PhotoForm options={formOptions} />
         </section>
+
+        <PhotoGalleryFilters
+          filters={filters}
+          options={formOptions}
+          shownCount={filteredPhotos.length}
+          totalCount={photos.length}
+        />
 
         <section className="space-y-3">
           <div>
@@ -59,20 +70,11 @@ export default async function PhotosPage({
           )}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-stone-950">Photo timeline</h2>
-          {photos.length ? (
-            <div className="space-y-3">
-              {photos.map((photo) => (
-                <PhotoPlaceholderCard key={photo.id} photo={photo}>
-                  <PhotoControls photo={photo} options={formOptions} />
-                </PhotoPlaceholderCard>
-              ))}
-            </div>
-          ) : (
-            <EmptyState text="No photos recorded yet." />
-          )}
-        </section>
+        <PhotoGallery
+          filters={filters}
+          options={formOptions}
+          photos={filteredPhotos}
+        />
       </div>
     </AppShell>
   );
@@ -111,40 +113,6 @@ function PhotoNotice({ notices }: { notices: PhotoSearchParams }) {
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
       {messages[notices.photoError] ?? "The photo could not be saved."}
-    </div>
-  );
-}
-
-function PhotoControls({
-  options,
-  photo,
-}: {
-  options: PhotoFormOptions;
-  photo: GardenPhoto;
-}) {
-  return (
-    <div className="space-y-3">
-      <details>
-        <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
-          Edit photo
-        </summary>
-        <div className="mt-3">
-          <PhotoEditForm options={options} photo={photo} />
-        </div>
-      </details>
-
-      <ConfirmActionForm
-        action={deletePhoto.bind(null, photo.id)}
-        confirmLabel="Delete photo"
-        confirmMessage="Delete this photo? This removes it from the timeline and storage."
-      >
-        <button
-          type="submit"
-          className="w-full cursor-pointer rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
-        >
-          Delete photo
-        </button>
-      </ConfirmActionForm>
     </div>
   );
 }
