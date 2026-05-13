@@ -135,6 +135,7 @@ function PhotoControls({
 
       <ConfirmActionForm
         action={deletePhoto.bind(null, photo.id)}
+        confirmLabel="Delete photo"
         confirmMessage="Delete this photo? This removes it from the timeline and storage."
       >
         <button
