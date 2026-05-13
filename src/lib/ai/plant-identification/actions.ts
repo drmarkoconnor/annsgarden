@@ -175,7 +175,12 @@ export async function applyIdentificationToExistingPlant(
   formData: FormData,
 ) {
   await requireSignedIn();
-  const plantId = requiredText(formData, "plant_id");
+  const plantId = optionalUuid(formData, "plant_id");
+
+  if (!plantId) {
+    redirect(`/garden/identify/${identificationId}?identifyError=missing-plant`);
+  }
+
   const supabase = createSupabaseAdminClient();
   const identification = await getIdentification(identificationId);
   const areaId = optionalUuid(formData, "primary_area_id") ?? identification.area_id;

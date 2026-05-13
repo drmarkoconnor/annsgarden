@@ -199,8 +199,15 @@ function ApplySuggestionForms({
           action={applyIdentificationToExistingPlant.bind(null, identification.id)}
           className="mt-4 space-y-3"
         >
-          <Select label="Plant" name="plant_id" defaultValue={identification.plantId ?? ""}>
-            <option value="">Choose plant</option>
+          <Select
+            label="Plant"
+            name="plant_id"
+            defaultValue={identification.plantId ?? ""}
+            required
+          >
+            <option value="" disabled>
+              Choose plant
+            </option>
             {formOptions.plants.map((plant) => (
               <option key={plant.id} value={plant.id}>
                 {plant.name}
@@ -292,9 +299,15 @@ function PlantIdentificationNotice({
     return null;
   }
 
+  const messages: Record<string, string> = {
+    "missing-plant": "Choose the existing plant you want to update.",
+    "not-found": "That plant suggestion could not be found.",
+    "save-failed": "The suggestion could not be updated. Please check the details and try again.",
+  };
+
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-      The suggestion could not be updated. Please check the details and try again.
+      {messages[notices.identifyError] ?? messages["save-failed"]}
     </div>
   );
 }
@@ -397,11 +410,13 @@ function Select({
   label,
   name,
   defaultValue,
+  required = false,
 }: {
   children: ReactNode;
   label: string;
   name: string;
   defaultValue?: string;
+  required?: boolean;
 }) {
   return (
     <label className="block text-sm font-medium text-stone-700">
@@ -409,6 +424,7 @@ function Select({
       <select
         name={name}
         defaultValue={defaultValue}
+        required={required}
         className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm"
       >
         {children}
