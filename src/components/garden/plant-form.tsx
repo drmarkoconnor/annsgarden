@@ -3,13 +3,25 @@ import type { GardenAreaRecord, PlantRecord } from "@/lib/garden/data";
 type PlantFormProps = {
   action: (formData: FormData) => Promise<void>;
   areas: GardenAreaRecord[];
+  defaultAreaId?: string;
   plant?: PlantRecord;
+  returnTo?: string;
   submitLabel: string;
 };
 
-export function PlantForm({ action, areas, plant, submitLabel }: PlantFormProps) {
+export function PlantForm({
+  action,
+  areas,
+  defaultAreaId,
+  plant,
+  returnTo,
+  submitLabel,
+}: PlantFormProps) {
+  const areaId = plant?.areaId ?? defaultAreaId;
+
   return (
     <form action={action} className="space-y-3">
+      {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <Field
         label="Common name"
         name="common_name"
@@ -22,7 +34,7 @@ export function PlantForm({ action, areas, plant, submitLabel }: PlantFormProps)
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Plant type" name="plant_type" defaultValue={plant?.plantType} />
-        <AreaSelect areas={areas} defaultValue={plant?.areaId} />
+        <AreaSelect areas={areas} defaultValue={areaId} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <HealthSelect defaultValue={plant?.healthStatus} />

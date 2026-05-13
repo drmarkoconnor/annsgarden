@@ -11,14 +11,22 @@ import {
 } from "react";
 
 type PhotoFormProps = {
+  defaultAreaId?: string;
+  defaultPlantId?: string;
   options: PhotoFormOptions;
+  returnTo?: string;
 };
 
 const targetUploadBytes = 900 * 1024;
 const resizeEdges = [1600, 1400, 1200];
 const resizeQualities = [0.84, 0.76, 0.68, 0.6];
 
-export function PhotoForm({ options }: PhotoFormProps) {
+export function PhotoForm({
+  defaultAreaId,
+  defaultPlantId,
+  options,
+  returnTo,
+}: PhotoFormProps) {
   const [photoStatus, setPhotoStatus] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -64,6 +72,7 @@ export function PhotoForm({ options }: PhotoFormProps) {
 
   return (
     <form action={createPhoto} className="space-y-4" onSubmit={handleSubmit}>
+      {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <Field label="Photo" name="photo" type="file" accept="image/*" required />
       {photoStatus ? (
         <p className="text-sm leading-6 text-stone-600">{photoStatus}</p>
@@ -82,7 +91,7 @@ export function PhotoForm({ options }: PhotoFormProps) {
         </Select>
       </div>
 
-      <Select label="Area" name="area_id" defaultValue="none">
+      <Select label="Area" name="area_id" defaultValue={defaultAreaId ?? "none"}>
         <option value="none">No area</option>
         {options.areas.map((area) => (
           <option key={area.id} value={area.id}>
@@ -96,7 +105,7 @@ export function PhotoForm({ options }: PhotoFormProps) {
           More links
         </summary>
         <div className="mt-3 space-y-3">
-          <Select label="Plant" name="plant_id" defaultValue="none">
+          <Select label="Plant" name="plant_id" defaultValue={defaultPlantId ?? "none"}>
             <option value="none">No plant</option>
             {options.plants.map((plant) => (
               <option key={plant.id} value={plant.id}>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
+import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TaskPriority, TaskStatus, TimingWindow } from "@/types/garden";
@@ -34,6 +35,7 @@ const timingWindows = new Set<TimingWindow>([
 export async function createTask(formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/");
   const month = optionalNumber(formData, "month") ?? currentMonth();
   const timingWindow = parseTimingWindow(formData);
   const year = yearForMonth(month);
@@ -63,7 +65,7 @@ export async function createTask(formData: FormData) {
     .single();
 
   if (taskError) {
-    redirect("/?taskError=save-failed");
+    redirect(pathWithParam(returnTo, "taskError", "save-failed"));
   }
 
   const instancePayload: TaskInstanceInsert = {
@@ -82,11 +84,13 @@ export async function createTask(formData: FormData) {
     .insert(instancePayload);
 
   if (instanceError) {
-    redirect("/?taskError=save-failed");
+    redirect(pathWithParam(returnTo, "taskError", "save-failed"));
   }
 
   revalidatePath("/");
-  redirect("/");
+  revalidatePath("/garden");
+  revalidatePath(returnTo);
+  redirect(pathWithParam(returnTo, "saved", "1"));
 }
 
 export async function recordTaskOutcome(instanceId: string, formData: FormData) {

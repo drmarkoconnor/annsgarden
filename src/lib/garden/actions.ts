@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
+import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
 import type { Database } from "@/lib/supabase/database.types";
 
 type AreaInsert = Database["public"]["Tables"]["garden_areas"]["Insert"];
@@ -27,6 +28,8 @@ const plantStatuses = new Set<PlantStatus>(["active", "removed", "dead", "unknow
 export async function createGardenArea(formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnToValue = optionalText(formData, "return_to");
+  const returnTo = safeReturnPath(returnToValue, "/garden");
   const payload: AreaInsert = {
     garden_id: ANN_GARDEN_ID,
     name: requiredText(formData, "name"),
@@ -43,15 +46,18 @@ export async function createGardenArea(formData: FormData) {
   const { error } = await supabase.from("garden_areas").insert(payload);
 
   if (error) {
-    handleMutationError("area", error);
+    handleMutationError("area", error, returnTo);
   }
 
   revalidatePath("/garden");
+  finishContextMutation(returnTo, Boolean(returnToValue));
 }
 
 export async function updateGardenArea(areaId: string, formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnToValue = optionalText(formData, "return_to");
+  const returnTo = safeReturnPath(returnToValue, "/garden");
   const payload: AreaUpdate = {
     name: requiredText(formData, "name"),
     description: optionalText(formData, "description"),
@@ -71,10 +77,11 @@ export async function updateGardenArea(areaId: string, formData: FormData) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("area", error);
+    handleMutationError("area", error, returnTo);
   }
 
   revalidatePath("/garden");
+  finishContextMutation(returnTo, Boolean(returnToValue));
 }
 
 export async function archiveGardenArea(areaId: string) {
@@ -87,7 +94,7 @@ export async function archiveGardenArea(areaId: string) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("area", error);
+    handleMutationError("area", error, "/garden");
   }
 
   revalidatePath("/garden");
@@ -103,7 +110,7 @@ export async function restoreGardenArea(areaId: string) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("area", error);
+    handleMutationError("area", error, "/garden");
   }
 
   revalidatePath("/garden");
@@ -112,6 +119,8 @@ export async function restoreGardenArea(areaId: string) {
 export async function createPlant(formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnToValue = optionalText(formData, "return_to");
+  const returnTo = safeReturnPath(returnToValue, "/garden");
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantInsert = {
     garden_id: ANN_GARDEN_ID,
@@ -129,15 +138,18 @@ export async function createPlant(formData: FormData) {
   const { error } = await supabase.from("plants").insert(payload);
 
   if (error) {
-    handleMutationError("plant", error);
+    handleMutationError("plant", error, returnTo);
   }
 
   revalidatePath("/garden");
+  finishContextMutation(returnTo, Boolean(returnToValue));
 }
 
 export async function updatePlant(plantId: string, formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnToValue = optionalText(formData, "return_to");
+  const returnTo = safeReturnPath(returnToValue, "/garden");
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantUpdate = {
     common_name: requiredText(formData, "common_name"),
@@ -158,10 +170,11 @@ export async function updatePlant(plantId: string, formData: FormData) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("plant", error);
+    handleMutationError("plant", error, returnTo);
   }
 
   revalidatePath("/garden");
+  finishContextMutation(returnTo, Boolean(returnToValue));
 }
 
 export async function archivePlant(plantId: string) {
@@ -177,7 +190,7 @@ export async function archivePlant(plantId: string) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("plant", error);
+    handleMutationError("plant", error, "/garden");
   }
 
   revalidatePath("/garden");
@@ -196,7 +209,7 @@ export async function restorePlant(plantId: string) {
     .eq("garden_id", ANN_GARDEN_ID);
 
   if (error) {
-    handleMutationError("plant", error);
+    handleMutationError("plant", error, "/garden");
   }
 
   revalidatePath("/garden");
@@ -249,10 +262,22 @@ function parsePlantStatus(formData: FormData): PlantStatus {
   return plantStatuses.has(value as PlantStatus) ? (value as PlantStatus) : "active";
 }
 
-function handleMutationError(scope: "area" | "plant", error: { code?: string }) {
+function finishContextMutation(returnTo: string, shouldRedirect: boolean) {
+  revalidatePath(returnTo);
+
+  if (shouldRedirect) {
+    redirect(pathWithParam(returnTo, "saved", "1"));
+  }
+}
+
+function handleMutationError(
+  scope: "area" | "plant",
+  error: { code?: string },
+  returnTo: string,
+) {
   if (scope === "area" && error.code === "23505") {
-    redirect("/garden?areaError=duplicate");
+    redirect(pathWithParam(returnTo, "areaError", "duplicate"));
   }
 
-  redirect(`/garden?${scope}Error=save-failed`);
+  redirect(pathWithParam(returnTo, `${scope}Error`, "save-failed"));
 }

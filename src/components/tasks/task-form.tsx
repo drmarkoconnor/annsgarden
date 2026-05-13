@@ -3,7 +3,10 @@ import type { TaskFormOptions } from "@/lib/tasks/data";
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 type TaskFormProps = {
+  defaultAreaId?: string;
+  defaultPlantId?: string;
   options: TaskFormOptions;
+  returnTo?: string;
 };
 
 const months = [
@@ -21,9 +24,15 @@ const months = [
   "December",
 ];
 
-export function TaskForm({ options }: TaskFormProps) {
+export function TaskForm({
+  defaultAreaId,
+  defaultPlantId,
+  options,
+  returnTo,
+}: TaskFormProps) {
   return (
     <form action={createTask} className="space-y-4">
+      {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <Field label="Task title" name="title" required />
 
       <label className="block text-sm font-medium text-stone-700">
@@ -70,7 +79,7 @@ export function TaskForm({ options }: TaskFormProps) {
         ))}
       </Select>
 
-      <Select label="Area" name="area_id" defaultValue="none">
+      <Select label="Area" name="area_id" defaultValue={defaultAreaId ?? "none"}>
         <option value="none">No area</option>
         {options.areas.map((area) => (
           <option key={area.id} value={area.id}>
@@ -79,7 +88,7 @@ export function TaskForm({ options }: TaskFormProps) {
         ))}
       </Select>
 
-      <Select label="Plant" name="plant_id" defaultValue="none">
+      <Select label="Plant" name="plant_id" defaultValue={defaultPlantId ?? "none"}>
         <option value="none">No plant</option>
         {options.plants.map((plant) => (
           <option key={plant.id} value={plant.id}>

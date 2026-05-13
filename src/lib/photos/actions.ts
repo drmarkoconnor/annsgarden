@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
+import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
 import { PHOTO_BUCKET } from "@/lib/photos/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
@@ -22,18 +23,19 @@ const supportedTypes = new Set([
 
 export async function createPhoto(formData: FormData) {
   await requireSignedIn();
+  const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/photos");
   const file = formData.get("photo");
 
   if (!(file instanceof File) || file.size === 0) {
-    redirect("/photos?photoError=missing-file");
+    redirect(pathWithParam(returnTo, "photoError", "missing-file"));
   }
 
   if (file.size > maxUploadBytes) {
-    redirect("/photos?photoError=file-too-large");
+    redirect(pathWithParam(returnTo, "photoError", "file-too-large"));
   }
 
   if (file.type && !supportedTypes.has(file.type)) {
-    redirect("/photos?photoError=unsupported-type");
+    redirect(pathWithParam(returnTo, "photoError", "unsupported-type"));
   }
 
   const supabase = createSupabaseAdminClient();
@@ -47,7 +49,7 @@ export async function createPhoto(formData: FormData) {
     });
 
   if (uploadError) {
-    redirect("/photos?photoError=upload-failed");
+    redirect(pathWithParam(returnTo, "photoError", "upload-failed"));
   }
 
   const payload: PhotoInsert = {
@@ -69,11 +71,13 @@ export async function createPhoto(formData: FormData) {
 
   if (insertError) {
     await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
-    redirect("/photos?photoError=save-failed");
+    redirect(pathWithParam(returnTo, "photoError", "save-failed"));
   }
 
   revalidatePath("/photos");
-  redirect("/photos?saved=1");
+  revalidatePath("/garden");
+  revalidatePath(returnTo);
+  redirect(pathWithParam(returnTo, "saved", "1"));
 }
 
 export async function updatePhoto(photoId: string, formData: FormData) {

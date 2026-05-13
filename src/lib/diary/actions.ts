@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
+import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -16,6 +17,7 @@ type TaskInstanceInsert = Database["public"]["Tables"]["task_instances"]["Insert
 export async function createDiaryEntry(formData: FormData) {
   await requireSignedIn();
   const supabase = createSupabaseAdminClient();
+  const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/diary");
   const quickNote = requiredText(formData, "quick_note");
   const followUpTitle = optionalText(formData, "follow_up_title");
   const followUpNeeded =
@@ -42,7 +44,7 @@ export async function createDiaryEntry(formData: FormData) {
     .single();
 
   if (diaryError) {
-    redirect("/diary?diaryError=save-failed");
+    redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
   }
 
   const tagRows = tagIds(formData).map<DiaryEntryTagInsert>((tagId) => ({
@@ -54,12 +56,17 @@ export async function createDiaryEntry(formData: FormData) {
     const { error: tagError } = await supabase.from("diary_entry_tags").insert(tagRows);
 
     if (tagError) {
-      redirect("/diary?diaryError=save-failed");
+      redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
     }
   }
 
   if (followUpTitle) {
-    const followUpTaskId = await createFollowUpTask(formData, followUpTitle, quickNote);
+    const followUpTaskId = await createFollowUpTask(
+      formData,
+      followUpTitle,
+      quickNote,
+      returnTo,
+    );
     const update: DiaryEntryUpdate = {
       follow_up_task_id: followUpTaskId,
       follow_up_needed: true,
@@ -71,25 +78,28 @@ export async function createDiaryEntry(formData: FormData) {
       .eq("garden_id", ANN_GARDEN_ID);
 
     if (updateError) {
-      redirect("/diary?diaryError=save-failed");
+      redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
     }
   }
 
   revalidatePath("/diary");
   revalidatePath("/");
-  redirect("/diary?saved=1");
+  revalidatePath("/garden");
+  revalidatePath(returnTo);
+  redirect(pathWithParam(returnTo, "saved", "1"));
 }
 
 async function createFollowUpTask(
   formData: FormData,
   title: string,
   quickNote: string,
+  returnTo: string,
 ) {
   const supabase = createSupabaseAdminClient();
   const dueDate = optionalText(formData, "follow_up_date");
   const month = dueDate ? Number(dueDate.slice(5, 7)) : currentMonth();
   const year = dueDate ? Number(dueDate.slice(0, 4)) : currentYear();
-  const categoryId = await getDiaryFollowUpCategoryId();
+  const categoryId = await getDiaryFollowUpCategoryId(returnTo);
   const taskPayload: TaskInsert = {
     garden_id: ANN_GARDEN_ID,
     title,
@@ -114,7 +124,7 @@ async function createFollowUpTask(
     .single();
 
   if (taskError) {
-    redirect("/diary?diaryError=save-failed");
+    redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
   }
 
   const dueWindow = dueDate
@@ -136,13 +146,13 @@ async function createFollowUpTask(
     .insert(instancePayload);
 
   if (instanceError) {
-    redirect("/diary?diaryError=save-failed");
+    redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
   }
 
   return task.id;
 }
 
-async function getDiaryFollowUpCategoryId() {
+async function getDiaryFollowUpCategoryId(returnTo: string) {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("categories")
@@ -152,7 +162,7 @@ async function getDiaryFollowUpCategoryId() {
     .maybeSingle();
 
   if (error) {
-    redirect("/diary?diaryError=save-failed");
+    redirect(pathWithParam(returnTo, "diaryError", "save-failed"));
   }
 
   return data?.id ?? null;

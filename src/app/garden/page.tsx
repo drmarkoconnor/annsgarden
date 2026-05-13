@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import type { ReactNode } from "react";
 import { AreaCard } from "@/components/area-card";
@@ -178,6 +179,12 @@ function SectionHeader({ title, count }: { title: string; count: string }) {
 function AreaControls({ area }: { area: GardenAreaRecord }) {
   return (
     <div className="space-y-3">
+      <Link
+        className="block rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm font-semibold text-emerald-800"
+        href={`/garden/areas/${area.id}`}
+      >
+        Open area workspace
+      </Link>
       <details>
         <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
           Edit area

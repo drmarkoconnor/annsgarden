@@ -3,12 +3,21 @@ import type { DiaryFormOptions } from "@/lib/diary/data";
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 type DiaryFormProps = {
+  defaultAreaId?: string;
+  defaultPlantId?: string;
   options: DiaryFormOptions;
+  returnTo?: string;
 };
 
-export function DiaryForm({ options }: DiaryFormProps) {
+export function DiaryForm({
+  defaultAreaId,
+  defaultPlantId,
+  options,
+  returnTo,
+}: DiaryFormProps) {
   return (
     <form action={createDiaryEntry} className="space-y-4">
+      {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <label className="block text-sm font-semibold text-stone-950">
         Quick note
         <textarea
@@ -32,7 +41,7 @@ export function DiaryForm({ options }: DiaryFormProps) {
         </Select>
       </div>
 
-      <Select label="Area" name="area_id" defaultValue="none">
+      <Select label="Area" name="area_id" defaultValue={defaultAreaId ?? "none"}>
         <option value="none">No area</option>
         {options.areas.map((area) => (
           <option key={area.id} value={area.id}>
@@ -46,7 +55,7 @@ export function DiaryForm({ options }: DiaryFormProps) {
           More links
         </summary>
         <div className="mt-3 space-y-3">
-          <Select label="Plant" name="plant_id" defaultValue="none">
+          <Select label="Plant" name="plant_id" defaultValue={defaultPlantId ?? "none"}>
             <option value="none">No plant</option>
             {options.plants.map((plant) => (
               <option key={plant.id} value={plant.id}>

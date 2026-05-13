@@ -3,12 +3,14 @@ import type { GardenAreaRecord } from "@/lib/garden/data";
 type AreaFormProps = {
   action: (formData: FormData) => Promise<void>;
   area?: GardenAreaRecord;
+  returnTo?: string;
   submitLabel: string;
 };
 
-export function AreaForm({ action, area, submitLabel }: AreaFormProps) {
+export function AreaForm({ action, area, returnTo, submitLabel }: AreaFormProps) {
   return (
     <form action={action} className="space-y-3">
+      {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <Field label="Name" name="name" defaultValue={area?.name} required />
       <TextArea
         label="Description"
