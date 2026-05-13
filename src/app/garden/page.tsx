@@ -55,6 +55,19 @@ export default async function GardenPage({
 
         <GardenNotice notices={notices} />
 
+        <Link
+          className="block rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-100/60"
+          href="/garden/identify"
+        >
+          <p className="text-xs font-medium text-emerald-700">AI plant assist</p>
+          <h2 className="mt-1 text-base font-semibold text-stone-950">
+            Identify a plant from a photo
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+            Review the suggestion before creating or updating a plant record.
+          </p>
+        </Link>
+
         <details className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-emerald-900">
             Add garden area

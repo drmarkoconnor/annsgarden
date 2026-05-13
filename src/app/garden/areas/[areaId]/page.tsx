@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
+import { PlantIdentificationForm } from "@/components/ai/plant-identification-form";
 import { AreaCard } from "@/components/area-card";
 import { DiaryEntryCard } from "@/components/diary-entry-card";
 import { AreaForm } from "@/components/garden/area-form";
@@ -59,6 +60,11 @@ export default async function AreaWorkspacePage({
   } = workspace;
   const returnTo = `/garden/areas/${area.id}`;
   const plantNameById = new Map(plants.map((plant) => [plant.id, plant.commonName]));
+  const plantIdentificationOptions = {
+    areas: activeAreas.map((item) => ({ id: item.id, name: item.name })),
+    plants: plants.map((item) => ({ id: item.id, name: item.commonName })),
+    profiles: photoFormOptions.profiles,
+  };
 
   return (
     <AppShell activeItem="garden">
@@ -124,6 +130,12 @@ export default async function AreaWorkspacePage({
                 defaultAreaId={area.id}
                 options={photoFormOptions}
                 returnTo={returnTo}
+              />
+            </ActionPanel>
+            <ActionPanel title="Identify plant">
+              <PlantIdentificationForm
+                defaultAreaId={area.id}
+                options={plantIdentificationOptions}
               />
             </ActionPanel>
           </div>

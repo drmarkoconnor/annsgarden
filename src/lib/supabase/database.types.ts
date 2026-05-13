@@ -363,6 +363,132 @@ export type Database = {
           },
         ];
       };
+      plant_identifications: {
+        Row: {
+          applied_at: string | null;
+          area_id: string | null;
+          care_summary: string | null;
+          common_name: string | null;
+          confidence: "low" | "medium" | "high" | "unknown";
+          confidence_notes: string | null;
+          created_at: string;
+          cultivar: string | null;
+          garden_id: string;
+          genus: string | null;
+          id: string;
+          identifying_features: string[];
+          image_storage_path: string | null;
+          latin_name: string | null;
+          model: string;
+          original_filename: string | null;
+          photo_id: string | null;
+          plant_id: string | null;
+          plant_type: string | null;
+          raw_result: Json;
+          requested_by: string | null;
+          rhs_notes: string | null;
+          rhs_sources: Json;
+          species: string | null;
+          status: "suggested" | "applied" | "discarded";
+          suggested_plant_notes: string | null;
+          warnings: string[];
+        };
+        Insert: {
+          applied_at?: string | null;
+          area_id?: string | null;
+          care_summary?: string | null;
+          common_name?: string | null;
+          confidence?: "low" | "medium" | "high" | "unknown";
+          confidence_notes?: string | null;
+          created_at?: string;
+          cultivar?: string | null;
+          garden_id: string;
+          genus?: string | null;
+          id?: string;
+          identifying_features?: string[];
+          image_storage_path?: string | null;
+          latin_name?: string | null;
+          model: string;
+          original_filename?: string | null;
+          photo_id?: string | null;
+          plant_id?: string | null;
+          plant_type?: string | null;
+          raw_result?: Json;
+          requested_by?: string | null;
+          rhs_notes?: string | null;
+          rhs_sources?: Json;
+          species?: string | null;
+          status?: "suggested" | "applied" | "discarded";
+          suggested_plant_notes?: string | null;
+          warnings?: string[];
+        };
+        Update: {
+          applied_at?: string | null;
+          area_id?: string | null;
+          care_summary?: string | null;
+          common_name?: string | null;
+          confidence?: "low" | "medium" | "high" | "unknown";
+          confidence_notes?: string | null;
+          created_at?: string;
+          cultivar?: string | null;
+          garden_id?: string;
+          genus?: string | null;
+          id?: string;
+          identifying_features?: string[];
+          image_storage_path?: string | null;
+          latin_name?: string | null;
+          model?: string;
+          original_filename?: string | null;
+          photo_id?: string | null;
+          plant_id?: string | null;
+          plant_type?: string | null;
+          raw_result?: Json;
+          requested_by?: string | null;
+          rhs_notes?: string | null;
+          rhs_sources?: Json;
+          species?: string | null;
+          status?: "suggested" | "applied" | "discarded";
+          suggested_plant_notes?: string | null;
+          warnings?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "plant_identifications_area_id_fkey";
+            columns: ["area_id"];
+            isOneToOne: false;
+            referencedRelation: "garden_areas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plant_identifications_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plant_identifications_photo_id_fkey";
+            columns: ["photo_id"];
+            isOneToOne: false;
+            referencedRelation: "photos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plant_identifications_plant_id_fkey";
+            columns: ["plant_id"];
+            isOneToOne: false;
+            referencedRelation: "plants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "plant_identifications_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       photos: {
         Row: {
           area_id: string | null;
