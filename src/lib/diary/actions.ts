@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
@@ -13,6 +14,7 @@ type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
 type TaskInstanceInsert = Database["public"]["Tables"]["task_instances"]["Insert"];
 
 export async function createDiaryEntry(formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const quickNote = requiredText(formData, "quick_note");
   const followUpTitle = optionalText(formData, "follow_up_title");

@@ -1,4 +1,6 @@
 import { AppShell } from "@/components/app-shell";
+import { signOut } from "@/lib/auth/actions";
+import { getSignedInClaims } from "@/lib/auth/guards";
 
 const moreItems = [
   {
@@ -23,7 +25,15 @@ const moreItems = [
   },
 ];
 
-export default function MorePage() {
+export const dynamic = "force-dynamic";
+
+export default async function MorePage() {
+  const claims = await getSignedInClaims();
+  const signedInEmail =
+    claims && "email" in claims && typeof claims.email === "string"
+      ? claims.email
+      : "Signed in";
+
   return (
     <AppShell activeItem="more">
       <div className="space-y-6">
@@ -33,6 +43,28 @@ export default function MorePage() {
           <p className="mt-1 max-w-sm text-base leading-7 text-stone-600">
             Supporting areas for the app, kept simple for now.
           </p>
+        </section>
+
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-xs font-medium text-emerald-700">App access</p>
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-stone-950">
+                Protected by Supabase Auth
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-stone-600">
+                {signedInEmail}
+              </p>
+            </div>
+            <form action={signOut}>
+              <button
+                className="w-full cursor-pointer rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 sm:w-auto"
+                type="submit"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </section>
 
         <section className="grid gap-3">

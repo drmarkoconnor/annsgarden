@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSignedIn } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import type { Database } from "@/lib/supabase/database.types";
@@ -24,6 +25,7 @@ const healthStatuses = new Set<HealthStatus>([
 const plantStatuses = new Set<PlantStatus>(["active", "removed", "dead", "unknown"]);
 
 export async function createGardenArea(formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const payload: AreaInsert = {
     garden_id: ANN_GARDEN_ID,
@@ -48,6 +50,7 @@ export async function createGardenArea(formData: FormData) {
 }
 
 export async function updateGardenArea(areaId: string, formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const payload: AreaUpdate = {
     name: requiredText(formData, "name"),
@@ -75,6 +78,7 @@ export async function updateGardenArea(areaId: string, formData: FormData) {
 }
 
 export async function archiveGardenArea(areaId: string) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("garden_areas")
@@ -90,6 +94,7 @@ export async function archiveGardenArea(areaId: string) {
 }
 
 export async function restoreGardenArea(areaId: string) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("garden_areas")
@@ -105,6 +110,7 @@ export async function restoreGardenArea(areaId: string) {
 }
 
 export async function createPlant(formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantInsert = {
@@ -130,6 +136,7 @@ export async function createPlant(formData: FormData) {
 }
 
 export async function updatePlant(plantId: string, formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantUpdate = {
@@ -158,6 +165,7 @@ export async function updatePlant(plantId: string, formData: FormData) {
 }
 
 export async function archivePlant(plantId: string) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("plants")
@@ -176,6 +184,7 @@ export async function archivePlant(plantId: string) {
 }
 
 export async function restorePlant(plantId: string) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("plants")

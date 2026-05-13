@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { PHOTO_BUCKET } from "@/lib/photos/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -20,6 +21,7 @@ const supportedTypes = new Set([
 ]);
 
 export async function createPhoto(formData: FormData) {
+  await requireSignedIn();
   const file = formData.get("photo");
 
   if (!(file instanceof File) || file.size === 0) {
@@ -75,6 +77,7 @@ export async function createPhoto(formData: FormData) {
 }
 
 export async function updatePhoto(photoId: string, formData: FormData) {
+  await requireSignedIn();
   const payload: PhotoUpdate = {
     area_id: optionalUuid(formData, "area_id"),
     caption: optionalText(formData, "caption"),
@@ -103,6 +106,7 @@ export async function updatePhoto(photoId: string, formData: FormData) {
 }
 
 export async function deletePhoto(photoId: string) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const { data: photo, error: readError } = await supabase
     .from("photos")

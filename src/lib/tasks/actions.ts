@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
@@ -31,6 +32,7 @@ const timingWindows = new Set<TimingWindow>([
 ]);
 
 export async function createTask(formData: FormData) {
+  await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const month = optionalNumber(formData, "month") ?? currentMonth();
   const timingWindow = parseTimingWindow(formData);
@@ -88,6 +90,7 @@ export async function createTask(formData: FormData) {
 }
 
 export async function recordTaskOutcome(instanceId: string, formData: FormData) {
+  await requireSignedIn();
   const status = parseTaskStatus(formData);
   const completedBy = optionalUuid(formData, "completed_by");
   const postponedUntil = status === "postponed" ? optionalText(formData, "postponed_until") : null;

@@ -115,6 +115,22 @@ Build:
 - photo timeline
 - side-by-side comparison
 
+## Phase 7.5 — Auth gate
+
+Build:
+
+- Supabase Auth login
+- protected app routes
+- server action guards
+- sign out
+
+Do not add:
+
+- public sign-up
+- role-based permissions
+- full RLS policy overhaul
+- multi-garden access
+
 ## Phase 8 — Search, filters and admin
 
 Build:
