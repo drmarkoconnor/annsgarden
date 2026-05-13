@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import type { ReactNode } from "react";
 import { AreaCard } from "@/components/area-card";
+import { ConfirmActionForm } from "@/components/confirm-action-form";
 import { PlantCard } from "@/components/plant-card";
 import { AreaForm } from "@/components/garden/area-form";
 import { PlantForm } from "@/components/garden/plant-form";
@@ -74,7 +75,11 @@ export default async function GardenPage({
         </section>
 
         {archivedAreas.length ? (
-          <ArchivedSection title="Archived areas">
+          <ArchivedSection
+            count={archivedAreas.length}
+            description="Archived areas are hidden from normal lists but can be restored here."
+            title="Archived areas"
+          >
             {archivedAreas.map((area) => (
               <ArchivedRow
                 key={area.id}
@@ -115,7 +120,11 @@ export default async function GardenPage({
         </section>
 
         {archivedPlants.length ? (
-          <ArchivedSection title="Archived plants">
+          <ArchivedSection
+            count={archivedPlants.length}
+            description="Archived plants are hidden from normal lists but can be restored here."
+            title="Archived plants"
+          >
             {archivedPlants.map((plant) => (
               <ArchivedRow
                 key={plant.id}
@@ -181,14 +190,17 @@ function AreaControls({ area }: { area: GardenAreaRecord }) {
           />
         </div>
       </details>
-      <form action={archiveGardenArea.bind(null, area.id)}>
+      <ConfirmActionForm
+        action={archiveGardenArea.bind(null, area.id)}
+        confirmMessage={`Archive ${area.name}? It will move to Archived areas and can be restored later.`}
+      >
         <button
           type="submit"
-          className="w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700"
+          className="w-full cursor-pointer rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-900"
         >
           Archive area
         </button>
-      </form>
+      </ConfirmActionForm>
     </div>
   );
 }
@@ -215,30 +227,38 @@ function PlantControls({
           />
         </div>
       </details>
-      <form action={archivePlant.bind(null, plant.id)}>
+      <ConfirmActionForm
+        action={archivePlant.bind(null, plant.id)}
+        confirmMessage={`Archive ${plant.commonName}? It will move to Archived plants and can be restored later.`}
+      >
         <button
           type="submit"
-          className="w-full rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700"
+          className="w-full cursor-pointer rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-900"
         >
           Archive plant
         </button>
-      </form>
+      </ConfirmActionForm>
     </div>
   );
 }
 
 function ArchivedSection({
+  count,
+  description,
   title,
   children,
 }: {
+  count: number;
+  description: string;
   title: string;
   children: ReactNode;
 }) {
   return (
-    <details className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+    <details open className="rounded-lg border border-amber-200 bg-amber-50 p-4">
       <summary className="cursor-pointer text-sm font-semibold text-stone-800">
-        {title}
+        {title} ({count})
       </summary>
+      <p className="mt-2 text-sm leading-6 text-stone-600">{description}</p>
       <div className="mt-3 space-y-2">{children}</div>
     </details>
   );
@@ -259,7 +279,10 @@ function ArchivedRow({
       className="flex items-center justify-between gap-3 rounded-md bg-stone-50 px-3 py-2"
     >
       <span className="text-sm font-medium text-stone-700">{name}</span>
-      <button type="submit" className="text-sm font-semibold text-emerald-700">
+      <button
+        type="submit"
+        className="cursor-pointer text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+      >
         {actionLabel}
       </button>
     </form>
