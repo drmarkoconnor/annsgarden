@@ -1,11 +1,18 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
+import { PHOTO_BUCKET } from "@/lib/photos/constants";
 import type { Database } from "@/lib/supabase/database.types";
-import type { GardenArea, Plant, PlantHealthStatus } from "@/types/garden";
+import type {
+  GardenArea,
+  GardenOrientationPhoto,
+  Plant,
+  PlantHealthStatus,
+} from "@/types/garden";
 
 type GardenRow = Database["public"]["Tables"]["gardens"]["Row"];
 type GardenAreaRow = Database["public"]["Tables"]["garden_areas"]["Row"];
+type PhotoRow = Database["public"]["Tables"]["photos"]["Row"];
 type PlantRow = Database["public"]["Tables"]["plants"]["Row"];
 
 export type GardenAreaRecord = GardenArea & {
@@ -38,7 +45,7 @@ export type GardenData = {
 export async function getGardenData(): Promise<GardenData> {
   const supabase = createSupabaseAdminClient();
 
-  const [gardenResult, areasResult, plantsResult] = await Promise.all([
+  const [gardenResult, areasResult, plantsResult, photosResult] = await Promise.all([
     supabase.from("gardens").select("*").eq("id", ANN_GARDEN_ID).single(),
     supabase
       .from("garden_areas")
@@ -51,6 +58,13 @@ export async function getGardenData(): Promise<GardenData> {
       .select("*")
       .eq("garden_id", ANN_GARDEN_ID)
       .order("common_name", { ascending: true }),
+    supabase
+      .from("photos")
+      .select("*")
+      .eq("garden_id", ANN_GARDEN_ID)
+      .not("storage_path", "is", null)
+      .order("taken_at", { ascending: false })
+      .order("uploaded_at", { ascending: false }),
   ]);
 
   if (gardenResult.error) {
@@ -65,12 +79,23 @@ export async function getGardenData(): Promise<GardenData> {
     throw new Error(plantsResult.error.message);
   }
 
+  if (photosResult.error) {
+    throw new Error(photosResult.error.message);
+  }
+
   const rows = areasResult.data ?? [];
   const plantRows = plantsResult.data ?? [];
+  const photoRows = photosResult.data ?? [];
   const plantCountByAreaId = countPlantsByAreaId(plantRows);
   const areaNameById = new Map(rows.map((area) => [area.id, area.name]));
-  const areas = rows.map((area) => mapArea(area, plantCountByAreaId.get(area.id) ?? 0));
-  const plants = plantRows.map(mapPlant);
+  const [areaPhotoById, plantPhotoById] = await Promise.all([
+    orientationPhotoByParentId(photoRows, "area_id"),
+    orientationPhotoByParentId(photoRows, "plant_id"),
+  ]);
+  const areas = rows.map((area) =>
+    mapArea(area, plantCountByAreaId.get(area.id) ?? 0, areaPhotoById.get(area.id)),
+  );
+  const plants = plantRows.map((plant) => mapPlant(plant, plantPhotoById.get(plant.id)));
 
   return {
     garden: gardenResult.data,
@@ -93,7 +118,11 @@ function countPlantsByAreaId(plants: PlantRow[]) {
   }, new Map<string, number>());
 }
 
-function mapArea(area: GardenAreaRow, plantCount: number): GardenAreaRecord {
+function mapArea(
+  area: GardenAreaRow,
+  plantCount: number,
+  orientationPhoto?: GardenOrientationPhoto,
+): GardenAreaRecord {
   return {
     id: area.id,
     name: area.name,
@@ -104,6 +133,7 @@ function mapArea(area: GardenAreaRow, plantCount: number): GardenAreaRecord {
     microclimate: area.microclimate_notes ?? "Microclimate notes not recorded yet.",
     plantCount,
     activeTaskCount: 0,
+    orientationPhoto,
     archivedAt: area.archived_at,
     displayOrder: area.display_order,
     descriptionValue: area.description,
@@ -116,7 +146,10 @@ function mapArea(area: GardenAreaRow, plantCount: number): GardenAreaRecord {
   };
 }
 
-function mapPlant(plant: PlantRow): PlantRecord {
+function mapPlant(
+  plant: PlantRow,
+  orientationPhoto?: GardenOrientationPhoto,
+): PlantRecord {
   return {
     id: plant.id,
     commonName: plant.common_name,
@@ -138,8 +171,60 @@ function mapPlant(plant: PlantRow): PlantRecord {
     healthStatus: plant.health_status as PlantHealthStatus,
     notes: plant.general_notes ?? "No notes recorded yet.",
     isUnknown: plant.is_unknown,
+    orientationPhoto,
     archivedAt: plant.archived_at,
     status: plant.status,
     generalNotesValue: plant.general_notes,
   };
+}
+
+async function orientationPhotoByParentId(
+  photos: PhotoRow[],
+  key: "area_id" | "plant_id",
+) {
+  const firstPhotos = photos.reduce((selected, photo) => {
+    const parentId = photo[key];
+
+    if (!parentId || !photo.storage_path || selected.has(parentId)) {
+      return selected;
+    }
+
+    selected.set(parentId, photo);
+    return selected;
+  }, new Map<string, PhotoRow>());
+
+  const entries = await Promise.all(
+    Array.from(firstPhotos).map(async ([parentId, photo]) => {
+      const imageUrl = photo.storage_path
+        ? await signedUrl(photo.storage_path)
+        : undefined;
+
+      if (!imageUrl) {
+        return null;
+      }
+
+      return [
+        parentId,
+        {
+          imageUrl,
+          caption: photo.caption ?? "Garden photo",
+        },
+      ] as const;
+    }),
+  );
+
+  return new Map(entries.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)));
+}
+
+async function signedUrl(storagePath: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .createSignedUrl(storagePath, 60 * 60);
+
+  if (error) {
+    return undefined;
+  }
+
+  return data.signedUrl;
 }

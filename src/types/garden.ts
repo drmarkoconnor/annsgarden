@@ -40,6 +40,7 @@ export type GardenArea = {
   microclimate: string;
   plantCount: number;
   activeTaskCount: number;
+  orientationPhoto?: GardenOrientationPhoto;
 };
 
 export type Plant = {
@@ -65,6 +66,12 @@ export type Plant = {
   isUnknown?: boolean;
   status?: "active" | "removed" | "dead" | "unknown";
   archivedAt?: string | null;
+  orientationPhoto?: GardenOrientationPhoto;
+};
+
+export type GardenOrientationPhoto = {
+  imageUrl: string;
+  caption: string;
 };
 
 export type GardenTask = {

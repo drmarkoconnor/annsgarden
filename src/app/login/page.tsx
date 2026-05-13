@@ -29,7 +29,7 @@ export default async function LoginPage({
     <main className="relative min-h-dvh overflow-hidden bg-stone-950 text-white">
       <Image
         alt="Ann in her garden"
-        className="object-cover"
+        className="object-cover object-top"
         fill
         priority
         sizes="100vw"
