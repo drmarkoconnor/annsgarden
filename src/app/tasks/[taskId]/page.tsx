@@ -2,30 +2,36 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TaskStatusBadge } from "@/components/task-status-badge";
-import { getAreaName } from "@/data/areas";
-import { getPlantName } from "@/data/plants";
-import { getTask, tasks } from "@/data/tasks";
+import { TaskOutcomeForm } from "@/components/tasks/task-outcome-form";
+import { getTaskDetail } from "@/lib/tasks/data";
+import type { TaskCompletionRecord } from "@/lib/tasks/data";
+import type { TaskStatus } from "@/types/garden";
 
-export function generateStaticParams() {
-  return tasks.map((task) => ({
-    taskId: task.id,
-  }));
-}
+export const dynamic = "force-dynamic";
+
+type TaskDetailSearchParams = {
+  saved?: string;
+  taskError?: string;
+};
 
 export default async function TaskDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ taskId: string }>;
+  searchParams?: Promise<TaskDetailSearchParams>;
 }) {
-  const { taskId } = await params;
-  const task = getTask(taskId);
+  const [{ taskId }, notices] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({}),
+  ]);
+  const detail = await getTaskDetail(taskId);
 
-  if (!task) {
+  if (!detail) {
     notFound();
   }
 
-  const areaName = getAreaName(task.areaId);
-  const plantName = getPlantName(task.plantId);
+  const { formOptions, task } = detail;
 
   return (
     <AppShell activeItem="tasks">
@@ -33,6 +39,8 @@ export default async function TaskDetailPage({
         <Link href="/" className="text-sm font-medium text-emerald-700">
           Back to tasks
         </Link>
+
+        <TaskNotice notices={notices} />
 
         <section className="space-y-3 rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
@@ -57,9 +65,9 @@ export default async function TaskDetailPage({
 
         <dl className="grid gap-3">
           <DetailRow label="Due" value={task.dueLabel} />
-          <DetailRow label="Priority" value={task.priority} />
-          {areaName ? <DetailRow label="Area" value={areaName} /> : null}
-          {plantName ? <DetailRow label="Plant" value={plantName} /> : null}
+          <DetailRow label="Priority" value={formatPriority(task.priority)} />
+          {task.areaName ? <DetailRow label="Area" value={task.areaName} /> : null}
+          {task.plantName ? <DetailRow label="Plant" value={task.plantName} /> : null}
           {task.assignedTo ? (
             <DetailRow label="Assigned to" value={task.assignedTo} />
           ) : null}
@@ -84,23 +92,52 @@ export default async function TaskDetailPage({
           </section>
         ) : null}
 
+        <TaskWarnings
+          safetyWarning={task.safetyWarning}
+          weatherWarning={task.weatherWarning}
+          wildlifeWarning={task.wildlifeWarning}
+        />
+
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-semibold text-stone-950">Record outcome</h2>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {["Done", "Part done", "Postpone", "Skip"].map((label) => (
-              <button
-                key={label}
-                type="button"
-                className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700"
-              >
-                {label}
-              </button>
-            ))}
+          <div className="mt-4">
+            <TaskOutcomeForm options={formOptions} task={task} />
           </div>
         </section>
+
+        {task.completions.length ? (
+          <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+            <h2 className="text-lg font-semibold text-stone-950">History</h2>
+            <div className="mt-3 space-y-3">
+              {task.completions.map((completion) => (
+                <CompletionRow key={completion.id} completion={completion} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </AppShell>
   );
+}
+
+function TaskNotice({ notices }: { notices: TaskDetailSearchParams }) {
+  if (notices.saved === "1") {
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+        Task outcome saved.
+      </div>
+    );
+  }
+
+  if (notices.taskError === "save-failed") {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+        The task outcome could not be saved. Please check the details and try again.
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -110,4 +147,95 @@ function DetailRow({ label, value }: { label: string; value: string }) {
       <dd className="mt-1 text-sm font-semibold text-stone-900">{value}</dd>
     </div>
   );
+}
+
+function TaskWarnings({
+  safetyWarning,
+  weatherWarning,
+  wildlifeWarning,
+}: {
+  safetyWarning?: string;
+  weatherWarning?: string;
+  wildlifeWarning?: string;
+}) {
+  const warnings = [
+    safetyWarning ? ["Safety", safetyWarning] : null,
+    weatherWarning ? ["Weather", weatherWarning] : null,
+    wildlifeWarning ? ["Wildlife", wildlifeWarning] : null,
+  ].filter((item): item is string[] => Boolean(item));
+
+  if (!warnings.length) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <h2 className="text-lg font-semibold text-amber-950">Notes</h2>
+      <div className="mt-3 space-y-2">
+        {warnings.map(([label, value]) => (
+          <p key={label} className="text-sm leading-6 text-amber-900">
+            <span className="font-semibold">{label}:</span> {value}
+          </p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CompletionRow({ completion }: { completion: TaskCompletionRecord }) {
+  return (
+    <article className="rounded-md bg-stone-50 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-stone-900">
+          {statusLabel(completion.status)}
+        </p>
+        <p className="text-xs font-medium text-stone-500">
+          {formatDate(completion.completedAt)}
+        </p>
+      </div>
+      <p className="mt-1 text-xs text-stone-500">
+        {completion.completedBy ? `By ${completion.completedBy}` : "No person selected"}
+        {completion.timeSpentMinutes
+          ? `, ${completion.timeSpentMinutes} minutes`
+          : ""}
+      </p>
+      {completion.note ? (
+        <p className="mt-2 text-sm leading-6 text-stone-600">{completion.note}</p>
+      ) : null}
+      {completion.skipReason ? (
+        <p className="mt-2 text-sm leading-6 text-stone-600">
+          Skip reason: {completion.skipReason}
+        </p>
+      ) : null}
+      {completion.postponeReason ? (
+        <p className="mt-2 text-sm leading-6 text-stone-600">
+          Postpone reason: {completion.postponeReason}
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
+function statusLabel(status: TaskStatus) {
+  const labels: Record<TaskStatus, string> = {
+    not_started: "Not started",
+    done: "Done",
+    partial: "Part done",
+    postponed: "Postponed",
+    skipped: "Skipped",
+    not_applicable: "Not applicable",
+    overdue: "Overdue",
+  };
+
+  return labels[status];
+}
+
+function formatPriority(priority: string) {
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }

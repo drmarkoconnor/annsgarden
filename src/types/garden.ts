@@ -9,6 +9,15 @@ export type TaskStatus =
 
 export type TaskSection = "this_month" | "overdue" | "upcoming" | "history";
 
+export type TaskPriority = "low" | "medium" | "high";
+
+export type TimingWindow =
+  | "early_month"
+  | "mid_month"
+  | "late_month"
+  | "all_month"
+  | "specific_date";
+
 export type PlantHealthStatus =
   | "thriving"
   | "okay"
@@ -56,27 +65,35 @@ export type Plant = {
 
 export type GardenTask = {
   id: string;
+  instanceId?: string;
+  taskId?: string;
   title: string;
   description: string;
   whyItMatters: string;
   category: string;
-  priority: "low" | "medium" | "high";
+  priority: TaskPriority;
   status: TaskStatus;
+  storedStatus?: TaskStatus;
   section: TaskSection;
   month: string;
-  timingWindow: "early_month" | "mid_month" | "late_month" | "all_month" | "specific_date";
+  timingWindow: TimingWindow;
   dueLabel: string;
   areaId?: string;
   plantId?: string;
-  assignedTo?: "Ann" | "Mark" | "Alicia";
+  assignedTo?: string;
+  assignedToId?: string;
   estimatedMinutes?: number;
   toolsNeeded?: string[];
   weatherWarning?: string;
   safetyWarning?: string;
   wildlifeWarning?: string;
   notes?: string;
-  completedBy?: "Ann" | "Mark" | "Alicia";
+  completedBy?: string;
+  completedById?: string;
   completedDate?: string;
+  dueStartDate?: string;
+  dueEndDate?: string;
+  postponedUntil?: string;
 };
 
 export type DiaryEntry = {

@@ -8,7 +8,7 @@ export function TaskProgressSummary({ tasks }: TaskProgressSummaryProps) {
   const thisMonthCount = tasks.filter((task) => task.section === "this_month").length;
   const overdueCount = tasks.filter((task) => task.status === "overdue").length;
   const upcomingCount = tasks.filter((task) => task.section === "upcoming").length;
-  const completedCount = tasks.filter((task) => task.status === "done").length;
+  const completedCount = tasks.filter((task) => task.section === "history").length;
   const totalCount = tasks.length;
   const progressLabel = `${completedCount}/${totalCount}`;
 

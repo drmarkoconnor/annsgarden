@@ -11,7 +11,7 @@ type TaskCardProps = {
 export function TaskCard({ task, areaName, plantName }: TaskCardProps) {
   return (
     <Link
-      href={`/tasks/${task.id}`}
+      href={`/tasks/${task.instanceId ?? task.id}`}
       className="block rounded-lg border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
     >
       <div className="flex items-start justify-between gap-3">
