@@ -101,13 +101,20 @@ export type DiaryEntry = {
   title: string;
   quickNote: string;
   entryDate: string;
-  createdBy: "Ann" | "Mark" | "Alicia";
+  createdBy: string;
   areaId?: string;
+  areaName?: string;
   plantId?: string;
+  plantName?: string;
   taskId?: string;
+  taskName?: string;
   tags: string[];
   whatWentWell?: string;
+  whatWentBadly?: string;
   whatToTryNext?: string;
+  followUpNeeded?: boolean;
+  followUpTaskId?: string;
+  followUpTaskTitle?: string;
 };
 
 export type GardenPhoto = {

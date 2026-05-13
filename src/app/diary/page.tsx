@@ -1,10 +1,23 @@
 import { AppShell } from "@/components/app-shell";
+import { DiaryForm } from "@/components/diary/diary-form";
 import { DiaryEntryCard } from "@/components/diary-entry-card";
-import { getAreaName } from "@/data/areas";
-import { diaryEntries } from "@/data/diary-entries";
-import { getPlantName } from "@/data/plants";
+import { getDiaryData } from "@/lib/diary/data";
 
-export default function DiaryPage() {
+export const dynamic = "force-dynamic";
+
+type DiarySearchParams = {
+  diaryError?: string;
+  saved?: string;
+};
+
+export default async function DiaryPage({
+  searchParams,
+}: {
+  searchParams?: Promise<DiarySearchParams>;
+}) {
+  const notices = searchParams ? await searchParams : {};
+  const { entries, formOptions } = await getDiaryData();
+
   return (
     <AppShell activeItem="diary">
       <div className="space-y-6">
@@ -16,53 +29,41 @@ export default function DiaryPage() {
           </p>
         </section>
 
+        <DiaryNotice notices={notices} />
+
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-          <label
-            htmlFor="quick-note"
-            className="text-sm font-semibold text-stone-950"
-          >
-            Quick note
-          </label>
-          <textarea
-            id="quick-note"
-            rows={4}
-            className="mt-3 w-full resize-none rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm leading-6 text-stone-800 outline-none focus:border-emerald-300 focus:bg-white"
-            placeholder="What did you notice in the garden?"
-          />
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <select
-              aria-label="Optional area"
-              className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700"
-              defaultValue=""
-            >
-              <option value="">Area</option>
-              <option>South-facing borders</option>
-              <option>Shady borders under trees</option>
-              <option>Orchard area, lower field</option>
-            </select>
-            <button
-              type="button"
-              className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
-            >
-              Save note
-            </button>
-          </div>
+          <DiaryForm options={formOptions} />
         </section>
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-stone-950">Recent notes</h2>
           <div className="space-y-3">
-            {diaryEntries.map((entry) => (
-              <DiaryEntryCard
-                key={entry.id}
-                entry={entry}
-                areaName={getAreaName(entry.areaId)}
-                plantName={getPlantName(entry.plantId)}
-              />
+            {entries.map((entry) => (
+              <DiaryEntryCard key={entry.id} entry={entry} />
             ))}
           </div>
         </section>
       </div>
     </AppShell>
   );
+}
+
+function DiaryNotice({ notices }: { notices: DiarySearchParams }) {
+  if (notices.saved === "1") {
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+        Diary note saved.
+      </div>
+    );
+  }
+
+  if (notices.diaryError === "save-failed") {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+        The diary note could not be saved. Please check the details and try again.
+      </div>
+    );
+  }
+
+  return null;
 }

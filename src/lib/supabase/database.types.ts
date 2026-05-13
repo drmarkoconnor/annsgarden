@@ -42,6 +42,136 @@ export type Database = {
         };
         Relationships: [];
       };
+      diary_entries: {
+        Row: {
+          area_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          entry_date: string;
+          follow_up_needed: boolean;
+          follow_up_task_id: string | null;
+          garden_id: string;
+          id: string;
+          plant_id: string | null;
+          quick_note: string;
+          task_instance_id: string | null;
+          title: string | null;
+          updated_at: string;
+          what_to_try_next: string | null;
+          what_went_badly: string | null;
+          what_went_well: string | null;
+        };
+        Insert: {
+          area_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          entry_date?: string;
+          follow_up_needed?: boolean;
+          follow_up_task_id?: string | null;
+          garden_id: string;
+          id?: string;
+          plant_id?: string | null;
+          quick_note: string;
+          task_instance_id?: string | null;
+          title?: string | null;
+          updated_at?: string;
+          what_to_try_next?: string | null;
+          what_went_badly?: string | null;
+          what_went_well?: string | null;
+        };
+        Update: {
+          area_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          entry_date?: string;
+          follow_up_needed?: boolean;
+          follow_up_task_id?: string | null;
+          garden_id?: string;
+          id?: string;
+          plant_id?: string | null;
+          quick_note?: string;
+          task_instance_id?: string | null;
+          title?: string | null;
+          updated_at?: string;
+          what_to_try_next?: string | null;
+          what_went_badly?: string | null;
+          what_went_well?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diary_entries_area_id_fkey";
+            columns: ["area_id"];
+            isOneToOne: false;
+            referencedRelation: "garden_areas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entries_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entries_follow_up_task_id_fkey";
+            columns: ["follow_up_task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entries_garden_id_fkey";
+            columns: ["garden_id"];
+            isOneToOne: false;
+            referencedRelation: "gardens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entries_plant_id_fkey";
+            columns: ["plant_id"];
+            isOneToOne: false;
+            referencedRelation: "plants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entries_task_instance_id_fkey";
+            columns: ["task_instance_id"];
+            isOneToOne: false;
+            referencedRelation: "task_instances";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      diary_entry_tags: {
+        Row: {
+          diary_entry_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          diary_entry_id: string;
+          tag_id: string;
+        };
+        Update: {
+          diary_entry_id?: string;
+          tag_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "diary_entry_tags_diary_entry_id_fkey";
+            columns: ["diary_entry_id"];
+            isOneToOne: false;
+            referencedRelation: "diary_entries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "diary_entry_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       garden_areas: {
         Row: {
           archived_at: string | null;
@@ -486,6 +616,27 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      tags: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          type: "diary" | "photo" | "plant" | "task";
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          type?: "diary" | "photo" | "plant" | "task";
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          type?: "diary" | "photo" | "plant" | "task";
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
