@@ -14,6 +14,7 @@ type PhotoInsert = Database["public"]["Tables"]["photos"]["Insert"];
 type PhotoUpdate = Database["public"]["Tables"]["photos"]["Update"];
 
 const maxUploadBytes = 10 * 1024 * 1024;
+const maxThumbnailBytes = 1024 * 1024;
 const supportedTypes = new Set([
   "image/jpeg",
   "image/png",
@@ -42,10 +43,13 @@ export async function createPhoto(formData: FormData) {
   const supabase = createSupabaseAdminClient();
   const defaultProfileId = await defaultProfileIdForClaims(supabase, claims);
   const storagePath = storagePathFor(file);
+  const thumbnail = optionalImageFile(formData, "thumbnail");
+  const thumbnailStoragePath = thumbnail ? thumbnailPathFor(thumbnail) : null;
   const bytes = await file.arrayBuffer();
   const { error: uploadError } = await supabase.storage
     .from(PHOTO_BUCKET)
     .upload(storagePath, bytes, {
+      cacheControl: "31536000",
       contentType: file.type || "image/jpeg",
       upsert: false,
     });
@@ -54,11 +58,29 @@ export async function createPhoto(formData: FormData) {
     redirect(pathWithParam(returnTo, "photoError", "upload-failed"));
   }
 
+  let uploadedThumbnailPath: string | null = null;
+
+  if (thumbnail && thumbnailStoragePath) {
+    const thumbnailBytes = await thumbnail.arrayBuffer();
+    const { error: thumbnailUploadError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(thumbnailStoragePath, thumbnailBytes, {
+        cacheControl: "31536000",
+        contentType: thumbnail.type || "image/jpeg",
+        upsert: false,
+      });
+
+    if (!thumbnailUploadError) {
+      uploadedThumbnailPath = thumbnailStoragePath;
+    }
+  }
+
   const payload: PhotoInsert = {
     garden_id: ANN_GARDEN_ID,
     uploaded_by: optionalUuid(formData, "uploaded_by") ?? defaultProfileId,
     storage_path: storagePath,
     original_storage_path: storagePath,
+    thumbnail_path: uploadedThumbnailPath,
     caption: optionalText(formData, "caption"),
     taken_at: optionalText(formData, "taken_at") ?? todayIsoDate(),
     area_id: optionalUuid(formData, "area_id"),
@@ -72,7 +94,9 @@ export async function createPhoto(formData: FormData) {
   const { error: insertError } = await supabase.from("photos").insert(payload);
 
   if (insertError) {
-    await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
+    await supabase.storage
+      .from(PHOTO_BUCKET)
+      .remove([storagePath, uploadedThumbnailPath].filter(Boolean) as string[]);
     redirect(pathWithParam(returnTo, "photoError", "save-failed"));
   }
 
@@ -116,7 +140,7 @@ export async function deletePhoto(photoId: string) {
   const supabase = createSupabaseAdminClient();
   const { data: photo, error: readError } = await supabase
     .from("photos")
-    .select("storage_path")
+    .select("storage_path, thumbnail_path")
     .eq("id", photoId)
     .eq("garden_id", ANN_GARDEN_ID)
     .single();
@@ -135,8 +159,12 @@ export async function deletePhoto(photoId: string) {
     redirect("/photos?photoError=delete-failed");
   }
 
-  if (photo.storage_path) {
-    await supabase.storage.from(PHOTO_BUCKET).remove([photo.storage_path]);
+  const storagePaths = [photo.storage_path, photo.thumbnail_path].filter(
+    Boolean,
+  ) as string[];
+
+  if (storagePaths.length) {
+    await supabase.storage.from(PHOTO_BUCKET).remove(storagePaths);
   }
 
   revalidatePath("/photos");
@@ -147,6 +175,12 @@ function storagePathFor(file: File) {
   const extension = fileExtension(file);
   const parts = todayParts();
   return `${ANN_GARDEN_ID}/${parts.year}/${crypto.randomUUID()}.${extension}`;
+}
+
+function thumbnailPathFor(file: File) {
+  const extension = fileExtension(file);
+  const parts = todayParts();
+  return `${ANN_GARDEN_ID}/${parts.year}/thumbs/${crypto.randomUUID()}.${extension}`;
 }
 
 function fileExtension(file: File) {
@@ -180,6 +214,18 @@ function optionalText(formData: FormData, key: string) {
 function optionalUuid(formData: FormData, key: string) {
   const value = optionalText(formData, key);
   return value === "none" ? null : value;
+}
+
+function optionalImageFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
+  }
+
+  return value.type.startsWith("image/") && value.size <= maxThumbnailBytes
+    ? value
+    : null;
 }
 
 function optionalList(formData: FormData, key: string) {

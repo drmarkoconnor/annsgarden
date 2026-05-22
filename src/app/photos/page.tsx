@@ -115,7 +115,9 @@ function PhotoNotice({ notices }: { notices: PhotoSearchParams }) {
   const messages: Record<string, string> = {
     "file-too-large": "The photo is too large. Please use an image under 10 MB.",
     "delete-failed": "The photo could not be deleted. Please try again.",
+    "image-failed": "The full image could not be opened. Please try again.",
     "missing-file": "Choose a photo before saving.",
+    "not-found": "That photo could not be found.",
     "save-failed": "The photo record could not be saved.",
     "unsupported-type": "Use a JPEG, PNG, WebP, HEIC or HEIF image.",
     "upload-failed": "The photo could not be uploaded. Please try again.",

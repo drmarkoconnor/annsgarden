@@ -27,6 +27,7 @@ These features should not be built in MVP unless explicitly moved into scope.
 
 ### Offline support
 
+- current app has PWA install metadata, an offline fallback page, a network banner and local form draft preservation
 - stronger offline editing
 - sync when connection returns
 - offline photo queue
@@ -40,9 +41,9 @@ These features should not be built in MVP unless explicitly moved into scope.
 
 ### AI features
 
-- plant identification from photos
+- plant identification from photos is now implemented as a suggestion workflow
 - pest/disease suggestion from photos
-- photo comparison
+- AI-assisted photo comparison
 - seasonal gap detection
 - “what changed since last month?” summaries
 

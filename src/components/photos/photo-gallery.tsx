@@ -342,6 +342,15 @@ function PhotoControls({
         </Link>
       </div>
 
+      <Link
+        className="block rounded-md border border-stone-200 bg-white px-3 py-2 text-center text-sm font-semibold text-stone-700"
+        href={`/photos/${photo.id}/image`}
+        rel="noreferrer"
+        target="_blank"
+      >
+        Open full image
+      </Link>
+
       <details>
         <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
           Edit photo

@@ -31,6 +31,9 @@ export type DiaryData = {
   formOptions: DiaryFormOptions;
 };
 
+const recentDiaryEntryLimit = 80;
+const recentTaskInstanceLimit = 80;
+
 export async function getDiaryData(): Promise<DiaryData> {
   const supabase = createSupabaseAdminClient();
   const [
@@ -45,37 +48,41 @@ export async function getDiaryData(): Promise<DiaryData> {
   ] = await Promise.all([
     supabase
       .from("diary_entries")
-      .select("*")
+      .select(
+        "id, area_id, created_by, entry_date, follow_up_needed, follow_up_task_id, plant_id, quick_note, task_instance_id, title, what_to_try_next, what_went_badly, what_went_well",
+      )
       .eq("garden_id", ANN_GARDEN_ID)
       .order("entry_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("diary_entry_tags").select("*"),
+      .order("created_at", { ascending: false })
+      .limit(recentDiaryEntryLimit),
+    supabase.from("diary_entry_tags").select("diary_entry_id, tag_id"),
     supabase
       .from("tags")
-      .select("*")
+      .select("id, name")
       .eq("type", "diary")
       .order("name", { ascending: true }),
     supabase
       .from("garden_areas")
-      .select("*")
+      .select("id, name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase
       .from("plants")
-      .select("*")
+      .select("id, common_name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("common_name", { ascending: true }),
-    supabase.from("profiles").select("*").order("display_name", { ascending: true }),
+    supabase.from("profiles").select("id, display_name").order("display_name", { ascending: true }),
     supabase
       .from("task_instances")
-      .select("*")
+      .select("id, task_id, month")
       .eq("garden_id", ANN_GARDEN_ID)
       .order("year", { ascending: false })
-      .order("month", { ascending: false }),
-    supabase.from("tasks").select("*").eq("garden_id", ANN_GARDEN_ID),
+      .order("month", { ascending: false })
+      .limit(recentTaskInstanceLimit),
+    supabase.from("tasks").select("id, title").eq("garden_id", ANN_GARDEN_ID),
   ]);
 
   if (entriesResult.error) {
@@ -110,12 +117,12 @@ export async function getDiaryData(): Promise<DiaryData> {
     throw new Error(tasksResult.error.message);
   }
 
-  const areas = areasResult.data ?? [];
-  const plants = plantsResult.data ?? [];
-  const profiles = profilesResult.data ?? [];
-  const tags = tagsResult.data ?? [];
-  const taskInstances = taskInstancesResult.data ?? [];
-  const tasks = tasksResult.data ?? [];
+  const areas = (areasResult.data ?? []) as AreaRow[];
+  const plants = (plantsResult.data ?? []) as PlantRow[];
+  const profiles = (profilesResult.data ?? []) as ProfileRow[];
+  const tags = (tagsResult.data ?? []) as TagRow[];
+  const taskInstances = (taskInstancesResult.data ?? []) as TaskInstanceRow[];
+  const tasks = (tasksResult.data ?? []) as TaskRow[];
   const areaById = new Map(areas.map((area) => [area.id, area]));
   const plantById = new Map(plants.map((plant) => [plant.id, plant]));
   const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
@@ -123,10 +130,13 @@ export async function getDiaryData(): Promise<DiaryData> {
   const taskInstanceById = new Map(
     taskInstances.map((instance) => [instance.id, instance]),
   );
-  const tagsByEntryId = groupTagsByEntryId(entryTagsResult.data ?? [], tags);
+  const tagsByEntryId = groupTagsByEntryId(
+    (entryTagsResult.data ?? []) as DiaryEntryTagRow[],
+    tags,
+  );
 
   return {
-    entries: (entriesResult.data ?? []).map((entry) =>
+    entries: ((entriesResult.data ?? []) as DiaryEntryRow[]).map((entry) =>
       mapDiaryEntry({
         area: entry.area_id ? areaById.get(entry.area_id) : undefined,
         entry,

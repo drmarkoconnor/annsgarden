@@ -18,6 +18,7 @@ type PlantIdentificationUpdate =
   Database["public"]["Tables"]["plant_identifications"]["Update"];
 
 const maxUploadBytes = 10 * 1024 * 1024;
+const maxThumbnailBytes = 1024 * 1024;
 const supportedTypes = new Set([
   "image/jpeg",
   "image/png",
@@ -46,6 +47,7 @@ export async function requestPlantIdentification(formData: FormData) {
   const areaId = optionalUuid(formData, "area_id");
   const plantId = optionalUuid(formData, "plant_id");
   const requestedBy = optionalUuid(formData, "requested_by");
+  const thumbnail = optionalImageFile(formData, "thumbnail");
   const areaName = areaId ? await getAreaName(areaId) : undefined;
   const bytes = await file.arrayBuffer();
   const identification = await identifyPlantFromImage({
@@ -57,15 +59,34 @@ export async function requestPlantIdentification(formData: FormData) {
     redirect("/garden/identify?identifyError=ai-failed");
   });
   const storagePath = storagePathFor(file);
+  const thumbnailStoragePath = thumbnail ? thumbnailPathFor(thumbnail) : null;
   const { error: uploadError } = await supabase.storage
     .from(PHOTO_BUCKET)
     .upload(storagePath, bytes, {
+      cacheControl: "31536000",
       contentType: file.type || "image/jpeg",
       upsert: false,
     });
 
   if (uploadError) {
     redirect("/garden/identify?identifyError=upload-failed");
+  }
+
+  let uploadedThumbnailPath: string | null = null;
+
+  if (thumbnail && thumbnailStoragePath) {
+    const thumbnailBytes = await thumbnail.arrayBuffer();
+    const { error: thumbnailUploadError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(thumbnailStoragePath, thumbnailBytes, {
+        cacheControl: "31536000",
+        contentType: thumbnail.type || "image/jpeg",
+        upsert: false,
+      });
+
+    if (!thumbnailUploadError) {
+      uploadedThumbnailPath = thumbnailStoragePath;
+    }
   }
 
   const photoPayload: PhotoInsert = {
@@ -75,6 +96,7 @@ export async function requestPlantIdentification(formData: FormData) {
     original_storage_path: storagePath,
     plant_id: plantId,
     storage_path: storagePath,
+    thumbnail_path: uploadedThumbnailPath,
     tags: ["ai identification"],
     taken_at: todayIsoDate(),
     uploaded_by: requestedBy,
@@ -86,7 +108,9 @@ export async function requestPlantIdentification(formData: FormData) {
     .single();
 
   if (photoError) {
-    await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
+    await supabase.storage
+      .from(PHOTO_BUCKET)
+      .remove([storagePath, uploadedThumbnailPath].filter(Boolean) as string[]);
     redirect("/garden/identify?identifyError=save-failed");
   }
 
@@ -123,7 +147,9 @@ export async function requestPlantIdentification(formData: FormData) {
 
   if (identificationError) {
     await supabase.from("photos").delete().eq("id", photo.id).eq("garden_id", ANN_GARDEN_ID);
-    await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
+    await supabase.storage
+      .from(PHOTO_BUCKET)
+      .remove([storagePath, uploadedThumbnailPath].filter(Boolean) as string[]);
     redirect("/garden/identify?identifyError=save-failed");
   }
 
@@ -303,6 +329,12 @@ function storagePathFor(file: File) {
   return `${ANN_GARDEN_ID}/ai-identifications/${parts.year}/${crypto.randomUUID()}.${extension}`;
 }
 
+function thumbnailPathFor(file: File) {
+  const extension = fileExtension(file);
+  const parts = todayParts();
+  return `${ANN_GARDEN_ID}/ai-identifications/${parts.year}/thumbs/${crypto.randomUUID()}.${extension}`;
+}
+
 function fileExtension(file: File) {
   const byType: Record<string, string> = {
     "image/heic": "heic",
@@ -349,6 +381,18 @@ function optionalText(formData: FormData, key: string) {
 function optionalUuid(formData: FormData, key: string) {
   const value = optionalText(formData, key);
   return value === "none" ? null : value;
+}
+
+function optionalImageFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
+  }
+
+  return value.type.startsWith("image/") && value.size <= maxThumbnailBytes
+    ? value
+    : null;
 }
 
 function emptyToNull(value: string) {

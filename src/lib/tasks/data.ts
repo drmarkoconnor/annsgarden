@@ -64,6 +64,7 @@ const completedStatuses = new Set<TaskStatus>([
   "skipped",
   "not_applicable",
 ]);
+const recentCompletionLimit = 200;
 
 export async function getTaskDashboardData(): Promise<TaskDashboardData> {
   const taskData = await getTaskData();
@@ -114,28 +115,31 @@ async function getTaskData() {
       .order("due_start_date", { ascending: true }),
     supabase
       .from("task_completions")
-      .select("*")
-      .order("completed_at", { ascending: false }),
+      .select(
+        "id, completed_at, completed_by, note, postpone_reason, skip_reason, status, task_instance_id, time_spent_minutes",
+      )
+      .order("completed_at", { ascending: false })
+      .limit(recentCompletionLimit),
     supabase
       .from("categories")
-      .select("*")
+      .select("id, name")
       .eq("type", "task")
       .is("archived_at", null)
       .order("display_order", { ascending: true }),
     supabase
       .from("garden_areas")
-      .select("*")
+      .select("id, name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase
       .from("plants")
-      .select("*")
+      .select("id, common_name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("common_name", { ascending: true }),
-    supabase.from("profiles").select("*").order("display_name", { ascending: true }),
+    supabase.from("profiles").select("id, display_name").order("display_name", { ascending: true }),
   ]);
 
   if (tasksResult.error) {
@@ -168,15 +172,25 @@ async function getTaskData() {
 
   const taskById = new Map((tasksResult.data ?? []).map((task) => [task.id, task]));
   const categoryById = new Map(
-    (categoriesResult.data ?? []).map((category) => [category.id, category]),
+    ((categoriesResult.data ?? []) as CategoryRow[]).map((category) => [
+      category.id,
+      category,
+    ]),
   );
-  const areaById = new Map((areasResult.data ?? []).map((area) => [area.id, area]));
-  const plantById = new Map((plantsResult.data ?? []).map((plant) => [plant.id, plant]));
+  const areaById = new Map(
+    ((areasResult.data ?? []) as AreaRow[]).map((area) => [area.id, area]),
+  );
+  const plantById = new Map(
+    ((plantsResult.data ?? []) as PlantRow[]).map((plant) => [plant.id, plant]),
+  );
   const profileById = new Map(
-    (profilesResult.data ?? []).map((profile) => [profile.id, profile]),
+    ((profilesResult.data ?? []) as ProfileRow[]).map((profile) => [
+      profile.id,
+      profile,
+    ]),
   );
   const completionsByInstanceId = groupCompletions(
-    completionsResult.data ?? [],
+    (completionsResult.data ?? []) as TaskCompletionRow[],
     profileById,
   );
 
@@ -206,10 +220,14 @@ async function getTaskData() {
   return {
     tasks,
     formOptions: {
-      areas: mapOptions(areasResult.data ?? [], "name"),
-      categories: mapOptions(categoriesResult.data ?? [], "name", formatCategoryName),
-      plants: mapOptions(plantsResult.data ?? [], "common_name"),
-      profiles: mapOptions(profilesResult.data ?? [], "display_name"),
+      areas: mapOptions((areasResult.data ?? []) as AreaRow[], "name"),
+      categories: mapOptions(
+        (categoriesResult.data ?? []) as CategoryRow[],
+        "name",
+        formatCategoryName,
+      ),
+      plants: mapOptions((plantsResult.data ?? []) as PlantRow[], "common_name"),
+      profiles: mapOptions((profilesResult.data ?? []) as ProfileRow[], "display_name"),
     },
   };
 }

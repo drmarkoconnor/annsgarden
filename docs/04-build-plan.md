@@ -170,6 +170,22 @@ Improve:
 - accessibility
 - Netlify deployment reliability
 
+2026-05-22 progress:
+
+- mobile field-mode basics added for quicker in-garden capture
+- task outcome, plant capture, area workspace and form pending states refined
+- PWA shell/offline fallback and draft preservation added
+- photo thumbnails and thumbnail-first gallery loading added
+- older gallery photos served through resized Supabase Storage signed URLs
+- full original-size photo loading moved behind `/photos/[photoId]/image`
+- Supabase data loaders narrowed with selected columns, recent limits and batched Storage signing where useful
+
+Still future work:
+
+- true offline mutation queue
+- older-photo stored thumbnail backfill
+- pagination or "load more" once real photo volume grows
+
 ## Development rules
 
 - Commit after each working phase.

@@ -2,7 +2,11 @@
 
 import { requestPlantIdentification } from "@/lib/ai/plant-identification/actions";
 import type { PlantIdentificationFormOptions } from "@/lib/ai/plant-identification/data";
-import { resizeImageFile, targetUploadBytes } from "@/lib/photos/client-resize";
+import {
+  resizeImageFile,
+  resizeImageThumbnail,
+  targetUploadBytes,
+} from "@/lib/photos/client-resize";
 import {
   useState,
   type FormEvent,
@@ -33,8 +37,12 @@ export function PlantIdentificationForm({
     }
 
     const input = form.elements.namedItem("photo");
+    const thumbnailInput = form.elements.namedItem("thumbnail");
 
-    if (!(input instanceof HTMLInputElement)) {
+    if (
+      !(input instanceof HTMLInputElement) ||
+      !(thumbnailInput instanceof HTMLInputElement)
+    ) {
       return;
     }
 
@@ -48,15 +56,20 @@ export function PlantIdentificationForm({
     setStatus("Preparing photo...");
 
     try {
-      const resized = await resizeImageFile(file, {
-        forceJpeg: true,
-        targetBytes: targetUploadBytes,
-      });
+      const [resized, thumbnail] = await Promise.all([
+        resizeImageFile(file, {
+          forceJpeg: true,
+          targetBytes: targetUploadBytes,
+        }),
+        resizeImageThumbnail(file),
+      ]);
 
       if (resized) {
-        const transfer = new DataTransfer();
-        transfer.items.add(resized);
-        input.files = transfer.files;
+        input.files = fileListWith(resized);
+      }
+
+      if (thumbnail) {
+        thumbnailInput.files = fileListWith(thumbnail);
       }
 
       setStatus("Asking AI...");
@@ -72,6 +85,13 @@ export function PlantIdentificationForm({
   return (
     <form action={requestPlantIdentification} className="space-y-4" onSubmit={handleSubmit}>
       <Field label="Photo" name="photo" type="file" accept="image/*" required />
+      <input
+        aria-hidden="true"
+        className="hidden"
+        name="thumbnail"
+        tabIndex={-1}
+        type="file"
+      />
       {status ? <p className="text-sm leading-6 text-stone-600">{status}</p> : null}
 
       <Select label="Area" name="area_id" defaultValue={defaultAreaId ?? "none"}>
@@ -115,6 +135,12 @@ export function PlantIdentificationForm({
       </button>
     </form>
   );
+}
+
+function fileListWith(file: File) {
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  return transfer.files;
 }
 
 function Field({

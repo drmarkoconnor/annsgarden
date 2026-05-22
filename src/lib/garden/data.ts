@@ -1,7 +1,7 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
-import { PHOTO_BUCKET } from "@/lib/photos/constants";
+import { photoImagePath, signedPhotoImageUrls } from "@/lib/photos/image-urls";
 import type { Database } from "@/lib/supabase/database.types";
 import type { DiaryFormOptions } from "@/lib/diary/data";
 import type { PhotoFormOptions } from "@/lib/photos/data";
@@ -76,6 +76,10 @@ const completedTaskStatuses = new Set<TaskStatus>([
   "skipped",
   "not_applicable",
 ]);
+const recentAreaDiaryLimit = 80;
+const recentAreaPhotoLimit = 48;
+const recentGardenPhotoLimit = 80;
+const recentTaskInstanceLimit = 120;
 
 export async function getGardenData(): Promise<GardenData> {
   const supabase = createSupabaseAdminClient();
@@ -95,11 +99,14 @@ export async function getGardenData(): Promise<GardenData> {
       .order("common_name", { ascending: true }),
     supabase
       .from("photos")
-      .select("*")
+      .select(
+        "id, area_id, caption, plant_id, storage_path, thumbnail_path, taken_at, uploaded_at",
+      )
       .eq("garden_id", ANN_GARDEN_ID)
       .not("storage_path", "is", null)
       .order("taken_at", { ascending: false })
-      .order("uploaded_at", { ascending: false }),
+      .order("uploaded_at", { ascending: false })
+      .limit(recentGardenPhotoLimit),
   ]);
 
   if (gardenResult.error) {
@@ -120,13 +127,20 @@ export async function getGardenData(): Promise<GardenData> {
 
   const rows = areasResult.data ?? [];
   const plantRows = plantsResult.data ?? [];
-  const photoRows = photosResult.data ?? [];
+  const photoRows = (photosResult.data ?? []) as PhotoRow[];
   const plantCountByAreaId = countPlantsByAreaId(plantRows);
   const areaNameById = new Map(rows.map((area) => [area.id, area.name]));
-  const [areaPhotoById, plantPhotoById] = await Promise.all([
-    orientationPhotoByParentId(photoRows, "area_id"),
-    orientationPhotoByParentId(photoRows, "plant_id"),
-  ]);
+  const imageUrlByPath = await signedPhotoImageUrls(photoRows);
+  const areaPhotoById = orientationPhotoByParentId(
+    photoRows,
+    "area_id",
+    imageUrlByPath,
+  );
+  const plantPhotoById = orientationPhotoByParentId(
+    photoRows,
+    "plant_id",
+    imageUrlByPath,
+  );
   const areas = rows.map((area) =>
     mapArea(area, plantCountByAreaId.get(area.id) ?? 0, areaPhotoById.get(area.id)),
   );
@@ -171,14 +185,17 @@ export async function getAreaWorkspaceData(
       .order("common_name", { ascending: true }),
     supabase
       .from("photos")
-      .select("*")
+      .select(
+        "id, area_id, caption, comparison_group_id, diary_entry_id, plant_id, same_position_note, storage_path, tags, taken_at, task_instance_id, thumbnail_path, uploaded_at, uploaded_by",
+      )
       .eq("garden_id", ANN_GARDEN_ID)
       .order("taken_at", { ascending: false })
-      .order("uploaded_at", { ascending: false }),
-    supabase.from("profiles").select("*").order("display_name", { ascending: true }),
+      .order("uploaded_at", { ascending: false })
+      .limit(recentAreaPhotoLimit),
+    supabase.from("profiles").select("id, display_name").order("display_name", { ascending: true }),
     supabase
       .from("categories")
-      .select("*")
+      .select("id, name, type")
       .in("type", ["task", "diary"])
       .is("archived_at", null)
       .order("display_order", { ascending: true }),
@@ -189,15 +206,19 @@ export async function getAreaWorkspaceData(
       .eq("garden_id", ANN_GARDEN_ID)
       .order("year", { ascending: true })
       .order("month", { ascending: true })
-      .order("due_start_date", { ascending: true }),
+      .order("due_start_date", { ascending: true })
+      .limit(recentTaskInstanceLimit),
     supabase
       .from("diary_entries")
-      .select("*")
+      .select(
+        "id, area_id, created_by, entry_date, follow_up_needed, follow_up_task_id, plant_id, quick_note, task_instance_id, title, what_to_try_next, what_went_badly, what_went_well",
+      )
       .eq("garden_id", ANN_GARDEN_ID)
       .order("entry_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("diary_entry_tags").select("*"),
-    supabase.from("tags").select("*").eq("type", "diary").order("name", { ascending: true }),
+      .order("created_at", { ascending: false })
+      .limit(recentAreaDiaryLimit),
+    supabase.from("diary_entry_tags").select("diary_entry_id, tag_id"),
+    supabase.from("tags").select("id, name").eq("type", "diary").order("name", { ascending: true }),
   ]);
 
   const results = [
@@ -229,12 +250,19 @@ export async function getAreaWorkspaceData(
   const activePlantRows = plantRows.filter((plant) => !plant.archived_at);
   const areaPlantRows = activePlantRows.filter((plant) => plant.primary_area_id === areaId);
   const areaPlantIds = new Set(areaPlantRows.map((plant) => plant.id));
-  const photoRows = photosResult.data ?? [];
+  const photoRows = (photosResult.data ?? []) as PhotoRow[];
   const plantCountByAreaId = countPlantsByAreaId(plantRows);
-  const [areaPhotoById, plantPhotoById] = await Promise.all([
-    orientationPhotoByParentId(photoRows, "area_id"),
-    orientationPhotoByParentId(photoRows, "plant_id"),
-  ]);
+  const imageUrlByPath = await signedPhotoImageUrls(photoRows);
+  const areaPhotoById = orientationPhotoByParentId(
+    photoRows,
+    "area_id",
+    imageUrlByPath,
+  );
+  const plantPhotoById = orientationPhotoByParentId(
+    photoRows,
+    "plant_id",
+    imageUrlByPath,
+  );
   const activeAreas = areaRows
     .filter((area) => !area.archived_at)
     .map((area) =>
@@ -248,14 +276,14 @@ export async function getAreaWorkspaceData(
   const areaPlants = areaPlantRows.map((plant) =>
     mapPlant(plant, plantPhotoById.get(plant.id)),
   );
-  const activeTaskCategories = (categoriesResult.data ?? []).filter(
+  const activeTaskCategories = ((categoriesResult.data ?? []) as CategoryRow[]).filter(
     (category) => category.type === "task",
   );
-  const diaryTags = tagsResult.data ?? [];
-  const profileRows = profilesResult.data ?? [];
+  const diaryTags = (tagsResult.data ?? []) as TagRow[];
+  const profileRows = (profilesResult.data ?? []) as ProfileRow[];
   const taskRows = tasksResult.data ?? [];
   const taskInstanceRows = taskInstancesResult.data ?? [];
-  const diaryRows = diaryEntriesResult.data ?? [];
+  const diaryRows = (diaryEntriesResult.data ?? []) as DiaryEntryRow[];
   const profileById = new Map(profileRows.map((profile) => [profile.id, profile]));
   const categoryById = new Map(activeTaskCategories.map((category) => [category.id, category]));
   const taskById = new Map(taskRows.map((task) => [task.id, task]));
@@ -293,7 +321,7 @@ export async function getAreaWorkspaceData(
     .sort(sortWorkspaceTasks)
     .slice(0, 6);
   const tagsByEntryId = groupDiaryTagsByEntryId(
-    diaryEntryTagsResult.data ?? [],
+    (diaryEntryTagsResult.data ?? []) as DiaryEntryTagRow[],
     diaryTags,
   );
   const diaryEntries = diaryRows
@@ -313,23 +341,22 @@ export async function getAreaWorkspaceData(
         task: getTaskForDiaryEntry(entry, taskInstanceRows, taskById),
       }),
     );
-  const photos = await Promise.all(
-    photoRows
-      .filter(
-        (photo) =>
-          photo.area_id === areaId ||
-          Boolean(photo.plant_id && areaPlantIds.has(photo.plant_id)),
-      )
-      .slice(0, 6)
-      .map((photo) =>
-        mapWorkspacePhoto({
-          areaName: area.name,
-          photo,
-          plant: photo.plant_id ? plantById.get(photo.plant_id) : undefined,
-          profile: photo.uploaded_by ? profileById.get(photo.uploaded_by) : undefined,
-          task: getTaskForPhoto(photo, taskInstanceRows, taskById),
-        }),
-      ),
+  const photos = photoRows
+    .filter(
+      (photo) =>
+        photo.area_id === areaId ||
+        Boolean(photo.plant_id && areaPlantIds.has(photo.plant_id)),
+    )
+    .slice(0, 6)
+    .map((photo) =>
+      mapWorkspacePhoto({
+        areaName: area.name,
+        imageUrlByPath,
+        photo,
+        plant: photo.plant_id ? plantById.get(photo.plant_id) : undefined,
+        profile: photo.uploaded_by ? profileById.get(photo.uploaded_by) : undefined,
+        task: getTaskForPhoto(photo, taskInstanceRows, taskById),
+      }),
   );
 
   return {
@@ -634,19 +661,23 @@ function getTaskForPhoto(
   return instance ? taskById.get(instance.task_id) : undefined;
 }
 
-async function mapWorkspacePhoto({
+function mapWorkspacePhoto({
   areaName,
+  imageUrlByPath,
   photo,
   plant,
   profile,
   task,
 }: {
   areaName: string;
+  imageUrlByPath: Map<string, string>;
   photo: PhotoRow;
   plant?: PlantRow;
   profile?: ProfileRow;
   task?: TaskRow;
-}): Promise<GardenPhoto> {
+}): GardenPhoto {
+  const imagePath = photoImagePath(photo);
+
   return {
     id: photo.id,
     areaId: photo.area_id ?? undefined,
@@ -654,7 +685,7 @@ async function mapWorkspacePhoto({
     caption: photo.caption ?? "Garden photo",
     comparisonGroupId: photo.comparison_group_id ?? undefined,
     diaryEntryId: photo.diary_entry_id ?? undefined,
-    imageUrl: photo.storage_path ? await signedUrl(photo.storage_path) : undefined,
+    imageUrl: imagePath ? imageUrlByPath.get(imagePath) : undefined,
     plantId: photo.plant_id ?? undefined,
     plantName: plant?.common_name,
     samePositionNote: photo.same_position_note ?? undefined,
@@ -806,14 +837,15 @@ function mapPlant(
   };
 }
 
-async function orientationPhotoByParentId(
+function orientationPhotoByParentId(
   photos: PhotoRow[],
   key: "area_id" | "plant_id",
+  imageUrlByPath: Map<string, string>,
 ) {
   const firstPhotos = photos.reduce((selected, photo) => {
     const parentId = photo[key];
 
-    if (!parentId || !photo.storage_path || selected.has(parentId)) {
+    if (!parentId || !photoImagePath(photo) || selected.has(parentId)) {
       return selected;
     }
 
@@ -821,11 +853,10 @@ async function orientationPhotoByParentId(
     return selected;
   }, new Map<string, PhotoRow>());
 
-  const entries = await Promise.all(
-    Array.from(firstPhotos).map(async ([parentId, photo]) => {
-      const imageUrl = photo.storage_path
-        ? await signedUrl(photo.storage_path)
-        : undefined;
+  const entries = Array.from(firstPhotos)
+    .map(([parentId, photo]) => {
+      const imagePath = photoImagePath(photo);
+      const imageUrl = imagePath ? imageUrlByPath.get(imagePath) : undefined;
 
       if (!imageUrl) {
         return null;
@@ -838,21 +869,7 @@ async function orientationPhotoByParentId(
           caption: photo.caption ?? "Garden photo",
         },
       ] as const;
-    }),
-  );
+    });
 
   return new Map(entries.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry)));
-}
-
-async function signedUrl(storagePath: string) {
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .createSignedUrl(storagePath, 60 * 60);
-
-  if (error) {
-    return undefined;
-  }
-
-  return data.signedUrl;
 }

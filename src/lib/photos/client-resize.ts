@@ -1,16 +1,23 @@
 export const targetUploadBytes = 900 * 1024;
+export const thumbnailUploadBytes = 140 * 1024;
 
-const resizeEdges = [1600, 1400, 1200];
-const resizeQualities = [0.84, 0.76, 0.68, 0.6];
+const defaultResizeEdges = [1600, 1400, 1200];
+const defaultResizeQualities = [0.84, 0.76, 0.68, 0.6];
+const thumbnailResizeEdges = [640, 480, 360];
+const thumbnailResizeQualities = [0.72, 0.62, 0.52, 0.44];
 
 export async function resizeImageFile(
   file: File,
   options: {
     forceJpeg?: boolean;
+    resizeEdges?: number[];
+    resizeQualities?: number[];
     targetBytes?: number;
   } = {},
 ) {
   const targetBytes = options.targetBytes ?? targetUploadBytes;
+  const resizeEdges = options.resizeEdges ?? defaultResizeEdges;
+  const resizeQualities = options.resizeQualities ?? defaultResizeQualities;
 
   if (
     !options.forceJpeg &&
@@ -38,7 +45,22 @@ export async function resizeImageFile(
     }
   }
 
-  return bestBlob && bestBlob.size < file.size ? blobToFile(bestBlob, file) : null;
+  if (!bestBlob) {
+    return null;
+  }
+
+  return options.forceJpeg || bestBlob.size < file.size
+    ? blobToFile(bestBlob, file)
+    : null;
+}
+
+export function resizeImageThumbnail(file: File) {
+  return resizeImageFile(file, {
+    forceJpeg: true,
+    resizeEdges: thumbnailResizeEdges,
+    resizeQualities: thumbnailResizeQualities,
+    targetBytes: thumbnailUploadBytes,
+  });
 }
 
 function loadImage(file: File) {

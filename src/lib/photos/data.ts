@@ -1,6 +1,6 @@
 import "server-only";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
-import { PHOTO_BUCKET } from "@/lib/photos/constants";
+import { photoImagePath, signedPhotoImageUrls } from "@/lib/photos/image-urls";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import type { GardenPhoto } from "@/types/garden";
@@ -32,7 +32,9 @@ export type PhotoData = {
   photos: GardenPhoto[];
 };
 
-const signedUrlSeconds = 60 * 60;
+const recentDiaryEntryLimit = 80;
+const recentPhotoLimit = 48;
+const recentTaskInstanceLimit = 80;
 
 export async function getPhotoData(): Promise<PhotoData> {
   const supabase = createSupabaseAdminClient();
@@ -47,36 +49,41 @@ export async function getPhotoData(): Promise<PhotoData> {
   ] = await Promise.all([
     supabase
       .from("photos")
-      .select("*")
+      .select(
+        "id, area_id, caption, comparison_group_id, diary_entry_id, plant_id, same_position_note, storage_path, tags, taken_at, task_instance_id, thumbnail_path, uploaded_at, uploaded_by",
+      )
       .eq("garden_id", ANN_GARDEN_ID)
       .order("taken_at", { ascending: false })
-      .order("uploaded_at", { ascending: false }),
+      .order("uploaded_at", { ascending: false })
+      .limit(recentPhotoLimit),
     supabase
       .from("garden_areas")
-      .select("*")
+      .select("id, name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase
       .from("plants")
-      .select("*")
+      .select("id, common_name")
       .eq("garden_id", ANN_GARDEN_ID)
       .is("archived_at", null)
       .order("common_name", { ascending: true }),
-    supabase.from("profiles").select("*").order("display_name", { ascending: true }),
+    supabase.from("profiles").select("id, display_name").order("display_name", { ascending: true }),
     supabase
       .from("task_instances")
-      .select("*")
+      .select("id, task_id, month")
       .eq("garden_id", ANN_GARDEN_ID)
       .order("year", { ascending: false })
-      .order("month", { ascending: false }),
-    supabase.from("tasks").select("*").eq("garden_id", ANN_GARDEN_ID),
+      .order("month", { ascending: false })
+      .limit(recentTaskInstanceLimit),
+    supabase.from("tasks").select("id, title").eq("garden_id", ANN_GARDEN_ID),
     supabase
       .from("diary_entries")
-      .select("*")
+      .select("id, quick_note, title")
       .eq("garden_id", ANN_GARDEN_ID)
-      .order("entry_date", { ascending: false }),
+      .order("entry_date", { ascending: false })
+      .limit(recentDiaryEntryLimit),
   ]);
 
   if (photosResult.error) {
@@ -107,12 +114,12 @@ export async function getPhotoData(): Promise<PhotoData> {
     throw new Error(diaryEntriesResult.error.message);
   }
 
-  const areas = areasResult.data ?? [];
-  const plants = plantsResult.data ?? [];
-  const profiles = profilesResult.data ?? [];
-  const taskInstances = taskInstancesResult.data ?? [];
-  const tasks = tasksResult.data ?? [];
-  const diaryEntries = diaryEntriesResult.data ?? [];
+  const areas = (areasResult.data ?? []) as AreaRow[];
+  const plants = (plantsResult.data ?? []) as PlantRow[];
+  const profiles = (profilesResult.data ?? []) as ProfileRow[];
+  const taskInstances = (taskInstancesResult.data ?? []) as TaskInstanceRow[];
+  const tasks = (tasksResult.data ?? []) as TaskRow[];
+  const diaryEntries = (diaryEntriesResult.data ?? []) as DiaryEntryRow[];
   const areaById = new Map(areas.map((area) => [area.id, area]));
   const plantById = new Map(plants.map((plant) => [plant.id, plant]));
   const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
@@ -122,19 +129,20 @@ export async function getPhotoData(): Promise<PhotoData> {
   );
   const diaryEntryById = new Map(diaryEntries.map((entry) => [entry.id, entry]));
 
-  const photos = await Promise.all(
-    (photosResult.data ?? []).map((photo) =>
-      mapPhoto({
-        area: photo.area_id ? areaById.get(photo.area_id) : undefined,
-        diaryEntry: photo.diary_entry_id
-          ? diaryEntryById.get(photo.diary_entry_id)
-          : undefined,
-        photo,
-        plant: photo.plant_id ? plantById.get(photo.plant_id) : undefined,
-        profile: photo.uploaded_by ? profileById.get(photo.uploaded_by) : undefined,
-        task: getTaskForInstance(photo.task_instance_id, taskInstanceById, taskById),
-      }),
-    ),
+  const photoRows = (photosResult.data ?? []) as PhotoRow[];
+  const imageUrlByPath = await signedPhotoImageUrls(photoRows);
+  const photos = photoRows.map((photo) =>
+    mapPhoto({
+      area: photo.area_id ? areaById.get(photo.area_id) : undefined,
+      diaryEntry: photo.diary_entry_id
+        ? diaryEntryById.get(photo.diary_entry_id)
+        : undefined,
+      imageUrlByPath,
+      photo,
+      plant: photo.plant_id ? plantById.get(photo.plant_id) : undefined,
+      profile: photo.uploaded_by ? profileById.get(photo.uploaded_by) : undefined,
+      task: getTaskForInstance(photo.task_instance_id, taskInstanceById, taskById),
+    }),
   );
 
   return {
@@ -163,9 +171,10 @@ export async function getPhotoData(): Promise<PhotoData> {
   };
 }
 
-async function mapPhoto({
+function mapPhoto({
   area,
   diaryEntry,
+  imageUrlByPath,
   photo,
   plant,
   profile,
@@ -173,11 +182,14 @@ async function mapPhoto({
 }: {
   area?: AreaRow;
   diaryEntry?: DiaryEntryRow;
+  imageUrlByPath: Map<string, string>;
   photo: PhotoRow;
   plant?: PlantRow;
   profile?: ProfileRow;
   task?: TaskRow;
-}): Promise<GardenPhoto> {
+}): GardenPhoto {
+  const imagePath = photoImagePath(photo);
+
   return {
     id: photo.id,
     areaId: photo.area_id ?? undefined,
@@ -186,7 +198,7 @@ async function mapPhoto({
     comparisonGroupId: photo.comparison_group_id ?? undefined,
     diaryEntryId: photo.diary_entry_id ?? undefined,
     diaryEntryTitle: diaryEntry?.title ?? undefined,
-    imageUrl: photo.storage_path ? await signedUrl(photo.storage_path) : undefined,
+    imageUrl: imagePath ? imageUrlByPath.get(imagePath) : undefined,
     plantId: photo.plant_id ?? undefined,
     plantName: plant?.common_name,
     samePositionNote: photo.same_position_note ?? undefined,
@@ -200,19 +212,6 @@ async function mapPhoto({
     uploadedBy: profile?.display_name ?? "Unknown",
     uploadedById: photo.uploaded_by ?? undefined,
   };
-}
-
-async function signedUrl(storagePath: string) {
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase.storage
-    .from(PHOTO_BUCKET)
-    .createSignedUrl(storagePath, signedUrlSeconds);
-
-  if (error) {
-    return undefined;
-  }
-
-  return data.signedUrl;
 }
 
 function chooseComparisonPhotos(photos: GardenPhoto[]) {

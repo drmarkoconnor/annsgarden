@@ -3,7 +3,11 @@
 import { createPhoto } from "@/lib/photos/actions";
 import { FormSubmitButton } from "@/components/forms/form-submit-button";
 import { useLocalFormDraft } from "@/components/forms/use-local-form-draft";
-import { resizeImageFile, targetUploadBytes } from "@/lib/photos/client-resize";
+import {
+  resizeImageFile,
+  resizeImageThumbnail,
+  targetUploadBytes,
+} from "@/lib/photos/client-resize";
 import type { PhotoFormOptions } from "@/lib/photos/data";
 import {
   useState,
@@ -44,14 +48,18 @@ export function PhotoForm({
     }
 
     const input = form.elements.namedItem("photo");
+    const thumbnailInput = form.elements.namedItem("thumbnail");
 
-    if (!(input instanceof HTMLInputElement)) {
+    if (
+      !(input instanceof HTMLInputElement) ||
+      !(thumbnailInput instanceof HTMLInputElement)
+    ) {
       return;
     }
 
     const file = input.files?.[0];
 
-    if (!file || !file.type.startsWith("image/") || file.size <= targetUploadBytes) {
+    if (!file || !file.type.startsWith("image/")) {
       return;
     }
 
@@ -59,12 +67,17 @@ export function PhotoForm({
     setPhotoStatus("Preparing photo...");
 
     try {
-      const resized = await resizeImageFile(file);
+      const [resized, thumbnail] = await Promise.all([
+        file.size > targetUploadBytes ? resizeImageFile(file) : Promise.resolve(null),
+        resizeImageThumbnail(file),
+      ]);
 
       if (resized && resized.size < file.size) {
-        const transfer = new DataTransfer();
-        transfer.items.add(resized);
-        input.files = transfer.files;
+        input.files = fileListWith(resized);
+      }
+
+      if (thumbnail) {
+        thumbnailInput.files = fileListWith(thumbnail);
       }
 
       form.dataset.photoReady = "true";
@@ -91,6 +104,13 @@ export function PhotoForm({
         accept="image/*"
         capture="environment"
         required
+      />
+      <input
+        aria-hidden="true"
+        className="hidden"
+        name="thumbnail"
+        tabIndex={-1}
+        type="file"
       />
       {photoStatus ? (
         <p className="text-sm leading-6 text-stone-600">{photoStatus}</p>
@@ -172,6 +192,12 @@ export function PhotoForm({
       </FormSubmitButton>
     </form>
   );
+}
+
+function fileListWith(file: File) {
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  return transfer.files;
 }
 
 function singleProfileId(profiles: PhotoFormOptions["profiles"]) {
