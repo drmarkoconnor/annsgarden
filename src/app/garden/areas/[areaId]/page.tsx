@@ -83,22 +83,6 @@ export default async function AreaWorkspacePage({
           </p>
         </section>
 
-        <AreaCard area={area}>
-          <details>
-            <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
-              Edit area details
-            </summary>
-            <div className="mt-3">
-              <AreaForm
-                action={updateGardenArea.bind(null, area.id)}
-                area={area}
-                returnTo={returnTo}
-                submitLabel="Update area"
-              />
-            </div>
-          </details>
-        </AreaCard>
-
         <section className="space-y-3">
           <SectionHeader title="Work in this area" meta="Quick add" />
           <div className="grid gap-3">
@@ -143,6 +127,22 @@ export default async function AreaWorkspacePage({
             </ActionPanel>
           </div>
         </section>
+
+        <AreaCard area={area}>
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
+              Edit area details
+            </summary>
+            <div className="mt-3">
+              <AreaForm
+                action={updateGardenArea.bind(null, area.id)}
+                area={area}
+                returnTo={returnTo}
+                submitLabel="Update area"
+              />
+            </div>
+          </details>
+        </AreaCard>
 
         <section className="space-y-3">
           <SectionHeader title="Open tasks" meta={`${tasks.length} shown`} />

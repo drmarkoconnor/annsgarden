@@ -31,6 +31,8 @@ export function TaskForm({
   options,
   returnTo,
 }: TaskFormProps) {
+  const defaultProfileId = singleProfileId(options.profiles);
+
   return (
     <form action={createTask} className="space-y-4">
       {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
@@ -123,7 +125,7 @@ export function TaskForm({
         />
       </label>
 
-      <Select label="Created by" name="created_by" defaultValue="none">
+      <Select label="Created by" name="created_by" defaultValue={defaultProfileId ?? "none"}>
         <option value="none">No one selected</option>
         {options.profiles.map((profile) => (
           <option key={profile.id} value={profile.id}>
@@ -140,6 +142,10 @@ export function TaskForm({
       </FormSubmitButton>
     </form>
   );
+}
+
+function singleProfileId(profiles: TaskFormOptions["profiles"]) {
+  return profiles.length === 1 ? profiles[0]?.id : undefined;
 }
 
 function Field({

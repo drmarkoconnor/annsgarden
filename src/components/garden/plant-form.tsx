@@ -44,23 +44,6 @@ export function PlantForm({
         placeholder="Rose by patio, unknown shrub, or leave blank if unknown"
         required={!isUnknown}
       />
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Latin name" name="latin_name" defaultValue={plant?.latinName} />
-        <Field label="Cultivar" name="cultivar" defaultValue={plant?.cultivar} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Plant type" name="plant_type" defaultValue={plant?.plantType} />
-        <AreaSelect areas={areas} defaultValue={areaId} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <HealthSelect defaultValue={plant?.healthStatus} />
-        <StatusSelect defaultValue={plant?.status} />
-      </div>
-      <TextArea
-        label="Notes"
-        name="general_notes"
-        defaultValue={plant?.generalNotesValue ?? undefined}
-      />
       <label className="flex items-center gap-2 text-sm font-medium text-stone-700">
         <input
           className="h-4 w-4 rounded border-stone-300 text-emerald-700"
@@ -71,6 +54,30 @@ export function PlantForm({
         />
         Mark as unknown plant
       </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <AreaSelect areas={areas} defaultValue={areaId} />
+        <HealthSelect defaultValue={plant?.healthStatus} />
+      </div>
+      <TextArea
+        label="Notes"
+        name="general_notes"
+        defaultValue={plant?.generalNotesValue ?? undefined}
+      />
+      <details className="rounded-md border border-stone-200 bg-white p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-stone-900">
+          More plant details
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Latin name" name="latin_name" defaultValue={plant?.latinName} />
+            <Field label="Cultivar" name="cultivar" defaultValue={plant?.cultivar} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Plant type" name="plant_type" defaultValue={plant?.plantType} />
+            <StatusSelect defaultValue={plant?.status} />
+          </div>
+        </div>
+      </details>
       <FormSubmitButton
         className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
         pendingLabel="Saving plant..."

@@ -8,6 +8,8 @@ type TaskOutcomeFormProps = {
 };
 
 export function TaskOutcomeForm({ options, task }: TaskOutcomeFormProps) {
+  const defaultProfileId = singleProfileId(options.profiles);
+
   return (
     <form action={recordTaskOutcome.bind(null, task.instanceId)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -31,7 +33,7 @@ export function TaskOutcomeForm({ options, task }: TaskOutcomeFormProps) {
           By
           <select
             name="completed_by"
-            defaultValue="none"
+            defaultValue={defaultProfileId ?? "none"}
             className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm"
           >
             <option value="none">No one selected</option>
@@ -102,4 +104,8 @@ export function TaskOutcomeForm({ options, task }: TaskOutcomeFormProps) {
       </FormSubmitButton>
     </form>
   );
+}
+
+function singleProfileId(profiles: TaskFormOptions["profiles"]) {
+  return profiles.length === 1 ? profiles[0]?.id : undefined;
 }

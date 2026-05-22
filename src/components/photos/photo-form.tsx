@@ -33,6 +33,7 @@ export function PhotoForm({
     ["photo", returnTo ?? "root", defaultAreaId ?? "none", defaultPlantId ?? "none"].join(":"),
     clearDraft,
   );
+  const defaultProfileId = singleProfileId(options.profiles);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -98,7 +99,7 @@ export function PhotoForm({
 
       <div className="grid grid-cols-2 gap-2">
         <Field label="Taken" name="taken_at" type="date" defaultValue={todayIsoDate()} />
-        <Select label="By" name="uploaded_by" defaultValue="none">
+        <Select label="By" name="uploaded_by" defaultValue={defaultProfileId ?? "none"}>
           <option value="none">No one selected</option>
           {options.profiles.map((profile) => (
             <option key={profile.id} value={profile.id}>
@@ -171,6 +172,10 @@ export function PhotoForm({
       </FormSubmitButton>
     </form>
   );
+}
+
+function singleProfileId(profiles: PhotoFormOptions["profiles"]) {
+  return profiles.length === 1 ? profiles[0]?.id : undefined;
 }
 
 function Field({

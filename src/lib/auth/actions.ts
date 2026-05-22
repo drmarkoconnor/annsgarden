@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { defaultProfileIdForClaims } from "@/lib/profiles/default-profile";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function signInWithPassword(formData: FormData) {
@@ -15,6 +17,12 @@ export async function signInWithPassword(formData: FormData) {
 
   if (error) {
     redirect(`/login?authError=invalid&email=${encodeURIComponent(email)}`);
+  }
+
+  const { data } = await supabase.auth.getClaims();
+
+  if (data?.claims?.sub) {
+    await defaultProfileIdForClaims(createSupabaseAdminClient(), data.claims);
   }
 
   redirect(nextPath);

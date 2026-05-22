@@ -46,28 +46,15 @@ export default async function GardenPage({
     <AppShell activeItem="garden">
       <div className="space-y-6">
         <section>
-          <p className="text-sm font-medium text-emerald-700">Live database</p>
+          <p className="text-sm font-medium text-emerald-700">Garden</p>
           <h1 className="mt-2 text-3xl font-semibold text-stone-950">Garden</h1>
           <p className="mt-1 max-w-sm text-base leading-7 text-stone-600">
-            {garden.name}, {garden.location_label}. Areas and plants now read
-            from Supabase.
+            {garden.name}, {garden.location_label}. Open an area, add a plant,
+            or capture what you notice while you are outside.
           </p>
         </section>
 
         <GardenNotice notices={notices} />
-
-        <Link
-          className="block rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-100/60"
-          href="/garden/identify"
-        >
-          <p className="text-xs font-medium text-emerald-700">AI plant assist</p>
-          <h2 className="mt-1 text-base font-semibold text-stone-950">
-            Identify a plant from a photo
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-stone-600">
-            Review the suggestion before creating or updating a plant record.
-          </p>
-        </Link>
 
         <details className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-emerald-900">
@@ -105,6 +92,19 @@ export default async function GardenPage({
             ))}
           </ArchivedSection>
         ) : null}
+
+        <Link
+          className="block rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition-colors hover:border-emerald-300 hover:bg-emerald-100/60"
+          href="/garden/identify"
+        >
+          <p className="text-xs font-medium text-emerald-700">Plant assist</p>
+          <h2 className="mt-1 text-base font-semibold text-stone-950">
+            Identify a plant from a photo
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+            Review the suggestion before creating or updating a plant record.
+          </p>
+        </Link>
 
         <details className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-emerald-900">

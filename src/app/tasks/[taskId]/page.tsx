@@ -57,6 +57,21 @@ export default async function TaskDetailPage({
           <p className="text-base leading-7 text-stone-600">{task.description}</p>
         </section>
 
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <h2 className="text-lg font-semibold text-stone-950">Record outcome</h2>
+          <div className="mt-4">
+            <QuickTaskOutcomeForm task={task} />
+          </div>
+          <details className="mt-4 rounded-md border border-emerald-200 bg-white/80 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-stone-900">
+              Add person, time or note
+            </summary>
+            <div className="mt-4">
+              <TaskOutcomeForm options={formOptions} task={task} />
+            </div>
+          </details>
+        </section>
+
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-semibold text-stone-950">Why it matters</h2>
           <p className="mt-2 text-sm leading-6 text-stone-600">
@@ -73,7 +88,7 @@ export default async function TaskDetailPage({
             <DetailRow label="Assigned to" value={task.assignedTo} />
           ) : null}
           {task.estimatedMinutes ? (
-            <DetailRow label="Time" value={`${task.estimatedMinutes} minutes`} />
+            <DetailRow label="Time" value={formatMinutes(task.estimatedMinutes)} />
           ) : null}
         </dl>
 
@@ -98,21 +113,6 @@ export default async function TaskDetailPage({
           weatherWarning={task.weatherWarning}
           wildlifeWarning={task.wildlifeWarning}
         />
-
-        <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-stone-950">Record outcome</h2>
-          <div className="mt-4">
-            <QuickTaskOutcomeForm task={task} />
-          </div>
-          <details className="mt-4 rounded-md border border-stone-200 bg-stone-50 p-3">
-            <summary className="cursor-pointer text-sm font-semibold text-stone-900">
-              Add person, time or note
-            </summary>
-            <div className="mt-4">
-              <TaskOutcomeForm options={formOptions} task={task} />
-            </div>
-          </details>
-        </section>
 
         {task.completions.length ? (
           <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -241,6 +241,10 @@ function statusLabel(status: TaskStatus) {
 
 function formatPriority(priority: string) {
   return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
+function formatMinutes(minutes: number) {
+  return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
 
 function formatDate(value: string) {

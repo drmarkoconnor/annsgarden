@@ -10,6 +10,9 @@ type PlantCardProps = {
 };
 
 export function PlantCard({ plant, areaName, children }: PlantCardProps) {
+  const notePreview = previewText(plant.notes);
+  const hasLongNotes = notePreview !== plant.notes;
+
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(7.5rem,46%)] gap-3">
@@ -24,7 +27,15 @@ export function PlantCard({ plant, areaName, children }: PlantCardProps) {
           {plant.latinName ? (
             <p className="mt-1 text-sm italic text-stone-500">{plant.latinName}</p>
           ) : null}
-          <p className="mt-3 text-sm leading-6 text-stone-600">{plant.notes}</p>
+          <p className="mt-3 text-sm leading-6 text-stone-600">{notePreview}</p>
+          {hasLongNotes ? (
+            <details className="mt-2">
+              <summary className="cursor-pointer text-sm font-semibold text-emerald-800">
+                Full notes
+              </summary>
+              <p className="mt-2 text-sm leading-6 text-stone-600">{plant.notes}</p>
+            </details>
+          ) : null}
         </div>
         <OrientationThumbnail
           label={`${plant.commonName} orientation photo`}
@@ -48,6 +59,16 @@ export function PlantCard({ plant, areaName, children }: PlantCardProps) {
       {children ? <div className="mt-4 border-t border-stone-100 pt-4">{children}</div> : null}
     </article>
   );
+}
+
+function previewText(value: string) {
+  const maxLength = 180;
+
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength).trim()}...`;
 }
 
 function OrientationThumbnail({
