@@ -1,8 +1,13 @@
+"use client";
+
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
+import { useLocalFormDraft } from "@/components/forms/use-local-form-draft";
 import { createDiaryEntry } from "@/lib/diary/actions";
 import type { DiaryFormOptions } from "@/lib/diary/data";
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 type DiaryFormProps = {
+  clearDraft?: boolean;
   defaultAreaId?: string;
   defaultPlantId?: string;
   options: DiaryFormOptions;
@@ -10,13 +15,19 @@ type DiaryFormProps = {
 };
 
 export function DiaryForm({
+  clearDraft = false,
   defaultAreaId,
   defaultPlantId,
   options,
   returnTo,
 }: DiaryFormProps) {
+  const formRef = useLocalFormDraft(
+    ["diary", returnTo ?? "root", defaultAreaId ?? "none", defaultPlantId ?? "none"].join(":"),
+    clearDraft,
+  );
+
   return (
-    <form action={createDiaryEntry} className="space-y-4">
+    <form action={createDiaryEntry} className="space-y-4" ref={formRef}>
       {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <label className="block text-sm font-semibold text-stone-950">
         Quick note
@@ -119,12 +130,12 @@ export function DiaryForm({
         </div>
       </details>
 
-      <button
-        type="submit"
-        className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Saving note..."
       >
         Save note
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TaskStatusBadge } from "@/components/task-status-badge";
+import { QuickTaskOutcomeForm } from "@/components/tasks/quick-task-outcome-form";
 import { TaskOutcomeForm } from "@/components/tasks/task-outcome-form";
 import { getTaskDetail } from "@/lib/tasks/data";
 import type { TaskCompletionRecord } from "@/lib/tasks/data";
@@ -23,7 +24,7 @@ export default async function TaskDetailPage({
 }) {
   const [{ taskId }, notices] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve({} as TaskDetailSearchParams),
   ]);
   const detail = await getTaskDetail(taskId);
 
@@ -101,8 +102,16 @@ export default async function TaskDetailPage({
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-semibold text-stone-950">Record outcome</h2>
           <div className="mt-4">
-            <TaskOutcomeForm options={formOptions} task={task} />
+            <QuickTaskOutcomeForm task={task} />
           </div>
+          <details className="mt-4 rounded-md border border-stone-200 bg-stone-50 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-stone-900">
+              Add person, time or note
+            </summary>
+            <div className="mt-4">
+              <TaskOutcomeForm options={formOptions} task={task} />
+            </div>
+          </details>
         </section>
 
         {task.completions.length ? (
@@ -121,7 +130,7 @@ export default async function TaskDetailPage({
 }
 
 function TaskNotice({ notices }: { notices: TaskDetailSearchParams }) {
-  if (notices.saved === "1") {
+  if (notices.saved) {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
         Task outcome saved.

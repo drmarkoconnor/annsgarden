@@ -1,0 +1,18 @@
+{
+  "name": "Ann's Garden Planner",
+  "short_name": "Ann's Garden",
+  "description": "A calm mobile garden planner for tasks, notes, plants and photos.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfcf8",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "/garden-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

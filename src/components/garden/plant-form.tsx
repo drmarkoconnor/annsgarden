@@ -1,7 +1,13 @@
+"use client";
+
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
+import { useLocalFormDraft } from "@/components/forms/use-local-form-draft";
 import type { GardenAreaRecord, PlantRecord } from "@/lib/garden/data";
+import { useState } from "react";
 
 type PlantFormProps = {
   action: (formData: FormData) => Promise<void>;
+  clearDraft?: boolean;
   areas: GardenAreaRecord[];
   defaultAreaId?: string;
   plant?: PlantRecord;
@@ -11,6 +17,7 @@ type PlantFormProps = {
 
 export function PlantForm({
   action,
+  clearDraft = false,
   areas,
   defaultAreaId,
   plant,
@@ -18,15 +25,24 @@ export function PlantForm({
   submitLabel,
 }: PlantFormProps) {
   const areaId = plant?.areaId ?? defaultAreaId;
+  const draftKey = [
+    "plant",
+    returnTo ?? "root",
+    defaultAreaId ?? "none",
+    plant?.id ?? "new",
+  ].join(":");
+  const [isUnknown, setIsUnknown] = useState(Boolean(plant?.isUnknown));
+  const formRef = useLocalFormDraft(draftKey, clearDraft);
 
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} className="space-y-3" ref={formRef}>
       {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
       <Field
-        label="Common name"
+        label="Plant name"
         name="common_name"
         defaultValue={plant?.commonName}
-        required
+        placeholder="Rose by patio, unknown shrub, or leave blank if unknown"
+        required={!isUnknown}
       />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Latin name" name="latin_name" defaultValue={plant?.latinName} />
@@ -50,16 +66,17 @@ export function PlantForm({
           className="h-4 w-4 rounded border-stone-300 text-emerald-700"
           name="is_unknown"
           type="checkbox"
-          defaultChecked={plant?.isUnknown}
+          checked={isUnknown}
+          onChange={(event) => setIsUnknown(event.currentTarget.checked)}
         />
         Mark as unknown plant
       </label>
-      <button
-        type="submit"
-        className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Saving plant..."
       >
         {submitLabel}
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }
@@ -68,11 +85,13 @@ function Field({
   label,
   name,
   defaultValue,
+  placeholder,
   required = false,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
+  placeholder?: string;
   required?: boolean;
 }) {
   return (
@@ -82,6 +101,7 @@ function Field({
         className="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-emerald-300"
         name={name}
         defaultValue={defaultValue}
+        placeholder={placeholder}
         required={required}
       />
     </label>

@@ -1,3 +1,4 @@
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
 import { createTask } from "@/lib/tasks/actions";
 import type { TaskFormOptions } from "@/lib/tasks/data";
 import type { InputHTMLAttributes, ReactNode } from "react";
@@ -131,12 +132,12 @@ export function TaskForm({
         ))}
       </Select>
 
-      <button
-        type="submit"
-        className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Saving task..."
       >
         Save task
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }

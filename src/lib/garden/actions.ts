@@ -50,7 +50,7 @@ export async function createGardenArea(formData: FormData) {
   }
 
   revalidatePath("/garden");
-  finishContextMutation(returnTo, Boolean(returnToValue));
+  finishContextMutation(returnTo, Boolean(returnToValue), "area");
 }
 
 export async function updateGardenArea(areaId: string, formData: FormData) {
@@ -81,7 +81,7 @@ export async function updateGardenArea(areaId: string, formData: FormData) {
   }
 
   revalidatePath("/garden");
-  finishContextMutation(returnTo, Boolean(returnToValue));
+  finishContextMutation(returnTo, Boolean(returnToValue), "area");
 }
 
 export async function archiveGardenArea(areaId: string) {
@@ -124,7 +124,7 @@ export async function createPlant(formData: FormData) {
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantInsert = {
     garden_id: ANN_GARDEN_ID,
-    common_name: requiredText(formData, "common_name"),
+    common_name: plantName(formData, isUnknown),
     latin_name: optionalText(formData, "latin_name"),
     cultivar: optionalText(formData, "cultivar"),
     plant_type: optionalText(formData, "plant_type"),
@@ -142,7 +142,7 @@ export async function createPlant(formData: FormData) {
   }
 
   revalidatePath("/garden");
-  finishContextMutation(returnTo, Boolean(returnToValue));
+  finishContextMutation(returnTo, Boolean(returnToValue), "plant");
 }
 
 export async function updatePlant(plantId: string, formData: FormData) {
@@ -152,7 +152,7 @@ export async function updatePlant(plantId: string, formData: FormData) {
   const returnTo = safeReturnPath(returnToValue, "/garden");
   const isUnknown = formData.get("is_unknown") === "on";
   const payload: PlantUpdate = {
-    common_name: requiredText(formData, "common_name"),
+    common_name: plantName(formData, isUnknown),
     latin_name: optionalText(formData, "latin_name"),
     cultivar: optionalText(formData, "cultivar"),
     plant_type: optionalText(formData, "plant_type"),
@@ -174,7 +174,7 @@ export async function updatePlant(plantId: string, formData: FormData) {
   }
 
   revalidatePath("/garden");
-  finishContextMutation(returnTo, Boolean(returnToValue));
+  finishContextMutation(returnTo, Boolean(returnToValue), "plant");
 }
 
 export async function archivePlant(plantId: string) {
@@ -225,6 +225,20 @@ function requiredText(formData: FormData, key: string) {
   return value;
 }
 
+function plantName(formData: FormData, isUnknown: boolean) {
+  const name = optionalText(formData, "common_name");
+
+  if (name) {
+    return name;
+  }
+
+  if (isUnknown) {
+    return "Unknown plant";
+  }
+
+  throw new Error("common_name is required.");
+}
+
 function optionalText(formData: FormData, key: string) {
   const value = formData.get(key);
 
@@ -262,11 +276,15 @@ function parsePlantStatus(formData: FormData): PlantStatus {
   return plantStatuses.has(value as PlantStatus) ? (value as PlantStatus) : "active";
 }
 
-function finishContextMutation(returnTo: string, shouldRedirect: boolean) {
+function finishContextMutation(
+  returnTo: string,
+  shouldRedirect: boolean,
+  savedValue: string,
+) {
   revalidatePath(returnTo);
 
   if (shouldRedirect) {
-    redirect(pathWithParam(returnTo, "saved", "1"));
+    redirect(pathWithParam(returnTo, "saved", savedValue));
   }
 }
 

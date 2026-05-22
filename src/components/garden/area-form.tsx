@@ -1,3 +1,4 @@
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
 import type { GardenAreaRecord } from "@/lib/garden/data";
 
 type AreaFormProps = {
@@ -48,12 +49,12 @@ export function AreaForm({ action, area, returnTo, submitLabel }: AreaFormProps)
           defaultValue={area?.displayOrder.toString()}
         />
       </div>
-      <button
-        type="submit"
-        className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Saving area..."
       >
         {submitLabel}
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }

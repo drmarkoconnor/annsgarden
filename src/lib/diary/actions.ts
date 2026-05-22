@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
+import { defaultProfileIdForClaims } from "@/lib/profiles/default-profile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -15,16 +16,17 @@ type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
 type TaskInstanceInsert = Database["public"]["Tables"]["task_instances"]["Insert"];
 
 export async function createDiaryEntry(formData: FormData) {
-  await requireSignedIn();
+  const claims = await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/diary");
   const quickNote = requiredText(formData, "quick_note");
+  const defaultProfileId = await defaultProfileIdForClaims(supabase, claims);
   const followUpTitle = optionalText(formData, "follow_up_title");
   const followUpNeeded =
     formData.get("follow_up_needed") === "on" || Boolean(followUpTitle);
   const payload: DiaryEntryInsert = {
     garden_id: ANN_GARDEN_ID,
-    created_by: optionalUuid(formData, "created_by"),
+    created_by: optionalUuid(formData, "created_by") ?? defaultProfileId,
     entry_date: optionalText(formData, "entry_date") ?? todayIsoDate(),
     title: optionalText(formData, "title") ?? deriveTitle(quickNote),
     quick_note: quickNote,
@@ -66,6 +68,7 @@ export async function createDiaryEntry(formData: FormData) {
       followUpTitle,
       quickNote,
       returnTo,
+      defaultProfileId,
     );
     const update: DiaryEntryUpdate = {
       follow_up_task_id: followUpTaskId,
@@ -86,7 +89,7 @@ export async function createDiaryEntry(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/garden");
   revalidatePath(returnTo);
-  redirect(pathWithParam(returnTo, "saved", "1"));
+  redirect(pathWithParam(returnTo, "saved", "diary"));
 }
 
 async function createFollowUpTask(
@@ -94,6 +97,7 @@ async function createFollowUpTask(
   title: string,
   quickNote: string,
   returnTo: string,
+  defaultProfileId: string | null,
 ) {
   const supabase = createSupabaseAdminClient();
   const dueDate = optionalText(formData, "follow_up_date");
@@ -114,7 +118,7 @@ async function createFollowUpTask(
     recurrence_type: "one_off",
     month,
     timing_window: dueDate ? "specific_date" : "all_month",
-    created_by: optionalUuid(formData, "created_by"),
+    created_by: optionalUuid(formData, "created_by") ?? defaultProfileId,
   };
 
   const { data: task, error: taskError } = await supabase
@@ -138,7 +142,7 @@ async function createFollowUpTask(
     due_start_date: dueWindow.start,
     due_end_date: dueWindow.end,
     status: "not_started",
-    assigned_to: optionalUuid(formData, "created_by"),
+    assigned_to: optionalUuid(formData, "created_by") ?? defaultProfileId,
   };
 
   const { error: instanceError } = await supabase

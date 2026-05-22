@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ann's Garden Planner",
   description: "A mobile-first garden planning app for Ann's garden.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Ann's Garden",
+  },
+  icons: {
+    icon: "/garden-icon.svg",
+    apple: "/garden-icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +38,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-stone-100 text-stone-950">{children}</body>
+      <body className="min-h-full bg-stone-100 text-stone-950">
+        {children}
+        <ServiceWorkerRegistration />
+      </body>
     </html>
   );
 }

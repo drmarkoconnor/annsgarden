@@ -39,7 +39,7 @@ export default async function AreaWorkspacePage({
 }) {
   const [{ areaId }, notices] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve({} as AreaWorkspaceSearchParams),
   ]);
   const workspace = await getAreaWorkspaceData(areaId);
 
@@ -113,6 +113,7 @@ export default async function AreaWorkspacePage({
               <PlantForm
                 action={createPlant}
                 areas={activeAreas}
+                clearDraft={notices.saved === "plant" || notices.saved === "1"}
                 defaultAreaId={area.id}
                 returnTo={returnTo}
                 submitLabel="Save plant"
@@ -120,6 +121,7 @@ export default async function AreaWorkspacePage({
             </ActionPanel>
             <ActionPanel title="Add note">
               <DiaryForm
+                clearDraft={notices.saved === "diary" || notices.saved === "1"}
                 defaultAreaId={area.id}
                 options={diaryFormOptions}
                 returnTo={returnTo}
@@ -127,6 +129,7 @@ export default async function AreaWorkspacePage({
             </ActionPanel>
             <ActionPanel title="Add photo">
               <PhotoForm
+                clearDraft={notices.saved === "photo" || notices.saved === "1"}
                 defaultAreaId={area.id}
                 options={photoFormOptions}
                 returnTo={returnTo}
@@ -215,7 +218,7 @@ function AreaWorkspaceNotice({
 }: {
   notices: AreaWorkspaceSearchParams;
 }) {
-  if (notices.saved === "1") {
+  if (notices.saved) {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
         Saved.

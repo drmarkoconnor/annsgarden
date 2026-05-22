@@ -24,6 +24,7 @@ export const dynamic = "force-dynamic";
 type GardenSearchParams = {
   areaError?: string;
   plantError?: string;
+  saved?: string;
 };
 
 export default async function GardenPage({
@@ -31,7 +32,7 @@ export default async function GardenPage({
 }: {
   searchParams?: Promise<GardenSearchParams>;
 }) {
-  const notices = searchParams ? await searchParams : {};
+  const notices: GardenSearchParams = searchParams ? await searchParams : {};
   const {
     garden,
     activeAreas,
@@ -110,11 +111,12 @@ export default async function GardenPage({
             Add plant
           </summary>
           <div className="mt-4">
-            <PlantForm
-              action={createPlant}
-              areas={activeAreas}
-              submitLabel="Save plant"
-            />
+          <PlantForm
+            action={createPlant}
+            areas={activeAreas}
+            clearDraft={notices.saved === "plant" || notices.saved === "1"}
+            submitLabel="Save plant"
+          />
           </div>
         </details>
 
@@ -156,6 +158,7 @@ export default async function GardenPage({
 
 function GardenNotice({ notices }: { notices: GardenSearchParams }) {
   const messages = [
+    notices.saved ? "Saved." : null,
     notices.areaError === "duplicate"
       ? "That garden area already exists. Edit the existing area, or choose a different name."
       : null,
@@ -171,8 +174,17 @@ function GardenNotice({ notices }: { notices: GardenSearchParams }) {
     return null;
   }
 
+  const isSuccess = Boolean(notices.saved && messages.length === 1);
+
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+    <div
+      className={[
+        "rounded-lg border p-4 text-sm leading-6",
+        isSuccess
+          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+          : "border-amber-200 bg-amber-50 text-amber-900",
+      ].join(" ")}
+    >
       {messages.map((message) => (
         <p key={message}>{message}</p>
       ))}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
+import { defaultProfileIdForClaims } from "@/lib/profiles/default-profile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TaskPriority, TaskStatus, TimingWindow } from "@/types/garden";
@@ -33,9 +34,10 @@ const timingWindows = new Set<TimingWindow>([
 ]);
 
 export async function createTask(formData: FormData) {
-  await requireSignedIn();
+  const claims = await requireSignedIn();
   const supabase = createSupabaseAdminClient();
   const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/");
+  const defaultProfileId = await defaultProfileIdForClaims(supabase, claims);
   const month = optionalNumber(formData, "month") ?? currentMonth();
   const timingWindow = parseTimingWindow(formData);
   const year = yearForMonth(month);
@@ -55,7 +57,7 @@ export async function createTask(formData: FormData) {
     timing_window: timingWindow,
     estimated_minutes: optionalNumber(formData, "estimated_minutes"),
     tools_needed: optionalList(formData, "tools_needed"),
-    created_by: optionalUuid(formData, "created_by"),
+    created_by: optionalUuid(formData, "created_by") ?? defaultProfileId,
   };
 
   const { data: task, error: taskError } = await supabase
@@ -90,15 +92,17 @@ export async function createTask(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/garden");
   revalidatePath(returnTo);
-  redirect(pathWithParam(returnTo, "saved", "1"));
+  redirect(pathWithParam(returnTo, "saved", "task"));
 }
 
 export async function recordTaskOutcome(instanceId: string, formData: FormData) {
-  await requireSignedIn();
+  const claims = await requireSignedIn();
   const status = parseTaskStatus(formData);
-  const completedBy = optionalUuid(formData, "completed_by");
   const postponedUntil = status === "postponed" ? optionalText(formData, "postponed_until") : null;
   const supabase = createSupabaseAdminClient();
+  const completedBy =
+    optionalUuid(formData, "completed_by") ??
+    (await defaultProfileIdForClaims(supabase, claims));
   const instanceUpdate: TaskInstanceUpdate = {
     status,
     postponed_until: postponedUntil,
@@ -135,7 +139,7 @@ export async function recordTaskOutcome(instanceId: string, formData: FormData) 
 
   revalidatePath("/");
   revalidatePath(`/tasks/${instanceId}`);
-  redirect(`/tasks/${instanceId}?saved=1`);
+  redirect(`/tasks/${instanceId}?saved=task-outcome`);
 }
 
 function requiredText(formData: FormData, key: string) {

@@ -6,6 +6,7 @@ import { requireSignedIn } from "@/lib/auth/guards";
 import { ANN_GARDEN_ID } from "@/lib/garden/constants";
 import { pathWithParam, safeReturnPath } from "@/lib/navigation/return-path";
 import { PHOTO_BUCKET } from "@/lib/photos/constants";
+import { defaultProfileIdForClaims } from "@/lib/profiles/default-profile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -22,7 +23,7 @@ const supportedTypes = new Set([
 ]);
 
 export async function createPhoto(formData: FormData) {
-  await requireSignedIn();
+  const claims = await requireSignedIn();
   const returnTo = safeReturnPath(optionalText(formData, "return_to"), "/photos");
   const file = formData.get("photo");
 
@@ -39,6 +40,7 @@ export async function createPhoto(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const defaultProfileId = await defaultProfileIdForClaims(supabase, claims);
   const storagePath = storagePathFor(file);
   const bytes = await file.arrayBuffer();
   const { error: uploadError } = await supabase.storage
@@ -54,7 +56,7 @@ export async function createPhoto(formData: FormData) {
 
   const payload: PhotoInsert = {
     garden_id: ANN_GARDEN_ID,
-    uploaded_by: optionalUuid(formData, "uploaded_by"),
+    uploaded_by: optionalUuid(formData, "uploaded_by") ?? defaultProfileId,
     storage_path: storagePath,
     original_storage_path: storagePath,
     caption: optionalText(formData, "caption"),
@@ -77,7 +79,7 @@ export async function createPhoto(formData: FormData) {
   revalidatePath("/photos");
   revalidatePath("/garden");
   revalidatePath(returnTo);
-  redirect(pathWithParam(returnTo, "saved", "1"));
+  redirect(pathWithParam(returnTo, "saved", "photo"));
 }
 
 export async function updatePhoto(photoId: string, formData: FormData) {

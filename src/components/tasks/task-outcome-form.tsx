@@ -1,3 +1,4 @@
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
 import { recordTaskOutcome } from "@/lib/tasks/actions";
 import type { TaskFormOptions, TaskRecord } from "@/lib/tasks/data";
 
@@ -93,12 +94,12 @@ export function TaskOutcomeForm({ options, task }: TaskOutcomeFormProps) {
         />
       </label>
 
-      <button
-        type="submit"
-        className="w-full rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white shadow-sm disabled:cursor-wait disabled:opacity-70"
+        pendingLabel="Saving outcome..."
       >
         Save outcome
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }

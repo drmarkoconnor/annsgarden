@@ -27,7 +27,7 @@ export default async function PhotosPage({
 }: {
   searchParams?: Promise<PhotoSearchParams>;
 }) {
-  const notices = searchParams ? await searchParams : {};
+  const notices: PhotoSearchParams = searchParams ? await searchParams : {};
   const { comparisonPhotos, formOptions, photos } = await getPhotoData();
   const filters = normalisePhotoFilters(notices);
   const filteredPhotos = photos.filter((photo) => photoMatchesFilters(photo, filters));
@@ -55,7 +55,10 @@ export default async function PhotosPage({
         <PhotoNotice notices={notices} />
 
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-          <PhotoForm options={formOptions} />
+          <PhotoForm
+            clearDraft={notices.saved === "photo" || notices.saved === "1"}
+            options={formOptions}
+          />
         </section>
 
         <PhotoGalleryFilters
@@ -118,7 +121,7 @@ function PhotoNotice({ notices }: { notices: PhotoSearchParams }) {
     "upload-failed": "The photo could not be uploaded. Please try again.",
   };
 
-  if (notices.saved === "1") {
+  if (notices.saved) {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
         Photo saved.

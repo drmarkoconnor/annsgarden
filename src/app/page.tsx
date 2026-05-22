@@ -10,6 +10,7 @@ import type { TaskRecord } from "@/lib/tasks/data";
 export const dynamic = "force-dynamic";
 
 type TaskSearchParams = {
+  saved?: string;
   taskError?: string;
 };
 
@@ -51,7 +52,7 @@ export default async function Home({
 }: {
   searchParams?: Promise<TaskSearchParams>;
 }) {
-  const notices = searchParams ? await searchParams : {};
+  const notices: TaskSearchParams = searchParams ? await searchParams : {};
   const {
     allTasks,
     overdueTasks,
@@ -129,7 +130,15 @@ export default async function Home({
 
 function TaskNotice({ notices }: { notices: TaskSearchParams }) {
   if (notices.taskError !== "save-failed") {
-    return null;
+    if (!notices.saved) {
+      return null;
+    }
+
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+        Task saved.
+      </div>
+    );
   }
 
   return (

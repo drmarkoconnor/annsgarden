@@ -15,7 +15,7 @@ export default async function DiaryPage({
 }: {
   searchParams?: Promise<DiarySearchParams>;
 }) {
-  const notices = searchParams ? await searchParams : {};
+  const notices: DiarySearchParams = searchParams ? await searchParams : {};
   const { entries, formOptions } = await getDiaryData();
 
   return (
@@ -32,7 +32,10 @@ export default async function DiaryPage({
         <DiaryNotice notices={notices} />
 
         <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-          <DiaryForm options={formOptions} />
+          <DiaryForm
+            clearDraft={notices.saved === "diary" || notices.saved === "1"}
+            options={formOptions}
+          />
         </section>
 
         <section className="space-y-3">
@@ -49,7 +52,7 @@ export default async function DiaryPage({
 }
 
 function DiaryNotice({ notices }: { notices: DiarySearchParams }) {
-  if (notices.saved === "1") {
+  if (notices.saved) {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
         Diary note saved.

@@ -1,6 +1,8 @@
 "use client";
 
 import { createPhoto } from "@/lib/photos/actions";
+import { FormSubmitButton } from "@/components/forms/form-submit-button";
+import { useLocalFormDraft } from "@/components/forms/use-local-form-draft";
 import { resizeImageFile, targetUploadBytes } from "@/lib/photos/client-resize";
 import type { PhotoFormOptions } from "@/lib/photos/data";
 import {
@@ -12,6 +14,7 @@ import {
 } from "react";
 
 type PhotoFormProps = {
+  clearDraft?: boolean;
   defaultAreaId?: string;
   defaultPlantId?: string;
   options: PhotoFormOptions;
@@ -19,12 +22,17 @@ type PhotoFormProps = {
 };
 
 export function PhotoForm({
+  clearDraft = false,
   defaultAreaId,
   defaultPlantId,
   options,
   returnTo,
 }: PhotoFormProps) {
   const [photoStatus, setPhotoStatus] = useState<string | null>(null);
+  const formRef = useLocalFormDraft(
+    ["photo", returnTo ?? "root", defaultAreaId ?? "none", defaultPlantId ?? "none"].join(":"),
+    clearDraft,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -68,9 +76,21 @@ export function PhotoForm({
   }
 
   return (
-    <form action={createPhoto} className="space-y-4" onSubmit={handleSubmit}>
+    <form
+      action={createPhoto}
+      className="space-y-4"
+      onSubmit={handleSubmit}
+      ref={formRef}
+    >
       {returnTo ? <input name="return_to" type="hidden" value={returnTo} /> : null}
-      <Field label="Photo" name="photo" type="file" accept="image/*" required />
+      <Field
+        label="Photo"
+        name="photo"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        required
+      />
       {photoStatus ? (
         <p className="text-sm leading-6 text-stone-600">{photoStatus}</p>
       ) : null}
@@ -143,12 +163,12 @@ export function PhotoForm({
 
       <Field label="Tags" name="tags" placeholder="flowering, border gap" />
 
-      <button
-        type="submit"
-        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+      <FormSubmitButton
+        className="w-full cursor-pointer rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
+        pendingLabel={photoStatus ?? "Saving photo..."}
       >
         Save photo
-      </button>
+      </FormSubmitButton>
     </form>
   );
 }
