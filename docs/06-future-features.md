@@ -35,8 +35,10 @@ These features should not be built in MVP unless explicitly moved into scope.
 
 ### Visual garden map
 
-- simple map of garden areas
-- tappable zones
+- first provisional survey-based map now exists at `/garden/map`
+- rename A-H zones with Ann's familiar names
+- connect map zones to real garden area records
+- add "what is where" overlays for plants, tasks, photos and diary notes
 - area photo markers
 
 ### AI features

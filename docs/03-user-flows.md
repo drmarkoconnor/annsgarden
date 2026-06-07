@@ -100,3 +100,12 @@
 1. Ann opens a task, plant, area or month.
 2. The app shows previous notes and completions.
 3. Ann uses this to decide what to do differently this year.
+
+## Flow 11 — Ann uses the garden map
+
+1. Ann opens Garden.
+2. She opens the survey-based map.
+3. She chooses a provisional lettered area.
+4. The app shows the selected area, nearby areas and useful record types for that part of the garden.
+5. Ann uses the selected area as a prompt for photos, notes, tasks and plant records.
+6. Later, the provisional letters can be replaced with Ann's familiar area names.

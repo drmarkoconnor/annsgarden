@@ -56,6 +56,19 @@ export default async function GardenPage({
 
         <GardenNotice notices={notices} />
 
+        <Link
+          className="block rounded-lg border border-sky-200 bg-sky-50 p-4 transition-colors hover:border-sky-300 hover:bg-sky-100/60"
+          href="/garden/map"
+        >
+          <p className="text-xs font-medium text-sky-700">Survey map</p>
+          <h2 className="mt-1 text-base font-semibold text-stone-950">
+            Open the garden map
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+            Temporary lettered areas from the Old Rectory topographic survey.
+          </p>
+        </Link>
+
         <details className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-emerald-900">
             Add garden area
