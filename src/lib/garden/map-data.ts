@@ -35,7 +35,7 @@ export const gardenMapZones: GardenMapZone[] = [
     provisionalName: "Area B",
     recordFocus: ["middle lawn", "tree belt", "west beds"],
     surveyCues:
-      "Middle-west garden between the rough grass and the potting-shed pinch point, with several mature trees.",
+      "Middle-west garden between the rough grass and the raised-bed pinch point, with several mature trees.",
   },
   {
     adjacent: ["B", "D", "E"],
@@ -45,9 +45,9 @@ export const gardenMapZones: GardenMapZone[] = [
     labelPosition: { x: 458, y: 333 },
     path: "M404 292 L456 258 L510 260 L530 320 L492 398 L392 404 L430 342 Z",
     provisionalName: "Area C",
-    recordFocus: ["potting shed", "cross path", "central transition"],
+    recordFocus: ["raised beds", "cross path", "central transition"],
     surveyCues:
-      "Narrow central section around the potting shed, path junction and gateway-like transition.",
+      "Narrow central section around the raised beds, path junction and gateway-like transition.",
   },
   {
     adjacent: ["C", "E", "G"],
@@ -121,7 +121,7 @@ export const gardenMapFeatures = [
     path: "M802 190 L880 220 L902 284 L818 298 L780 236 Z",
   },
   {
-    label: "Potting shed",
+    label: "Raised beds",
     path: "M365 310 L408 310 L408 350 L365 350 Z",
   },
   {

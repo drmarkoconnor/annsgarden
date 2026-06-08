@@ -202,8 +202,8 @@ function GardenMapSvg({
       <text fill="#57534e" fontSize="14" fontWeight="700" x="802" y="248">
         Garage
       </text>
-      <text fill="#57534e" fontSize="13" fontWeight="700" x="354" y="304">
-        Potting
+      <text fill="#57534e" fontSize="11" fontWeight="700" textAnchor="middle" x="386" y="304">
+        Raised beds
       </text>
       <NorthArrow />
     </svg>
