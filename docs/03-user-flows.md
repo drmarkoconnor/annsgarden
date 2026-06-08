@@ -105,7 +105,7 @@
 
 1. Ann opens Garden.
 2. She opens the survey-based map.
-3. She chooses a named area using the compact map letter.
+3. She chooses a named area on the map or in the area-name grid.
 4. The app shows the selected area, nearby areas and useful record types for that part of the garden.
 5. Ann uses the selected area as a prompt for photos, notes, tasks and plant records.
 6. Later, the named map areas can open the matching garden area workspaces directly.

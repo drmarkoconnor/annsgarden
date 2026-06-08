@@ -23,21 +23,21 @@ export function GardenMapExplorer({ selectedZone }: GardenMapExplorerProps) {
         <MapFrame>
           <GardenMapSvg selectedZone={selectedZone} />
         </MapFrame>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-9">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {gardenMapZones.map((zone) => (
             <Link
               key={zone.code}
-              aria-label={`${zone.code}: ${zone.provisionalName}`}
+              aria-label={`${zone.name} map area`}
               aria-current={zone.code === selectedZone.code ? "page" : undefined}
               className={[
-                "rounded-md border px-3 py-2 text-center text-sm font-semibold",
+                "flex min-h-12 items-center justify-center rounded-md border px-2 py-2 text-center text-xs font-semibold leading-tight sm:text-sm",
                 zone.code === selectedZone.code
                   ? "border-emerald-700 bg-emerald-700 text-white"
                   : "border-stone-200 bg-white text-stone-700",
               ].join(" ")}
               href={zoneHref(zone)}
             >
-              {zone.code}
+              {zone.name}
             </Link>
           ))}
         </div>
@@ -47,7 +47,7 @@ export function GardenMapExplorer({ selectedZone }: GardenMapExplorerProps) {
         <div>
           <p className="text-sm font-medium text-emerald-700">Selected area</p>
           <h2 className="mt-1 text-2xl font-semibold text-stone-950">
-            {selectedZone.provisionalName}
+            {selectedZone.name}
           </h2>
           <p className="mt-2 text-sm leading-6 text-stone-600">
             {selectedZone.surveyCues}
@@ -85,7 +85,7 @@ export function GardenMapExplorer({ selectedZone }: GardenMapExplorerProps) {
                     className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700"
                     href={zoneHref(zone)}
                   >
-                    {zone.provisionalName}
+                    {zone.name}
                   </Link>
                 ) : null;
               })}
@@ -122,11 +122,17 @@ function MapFrame({
   return (
     <div
       className={[
-        "overflow-hidden rounded-lg border border-stone-200 bg-[#fbfaf5] shadow-sm",
-        compact ? "aspect-[1.65/1]" : "aspect-[1.9/1]",
+        "overflow-x-auto overflow-y-hidden rounded-lg border border-stone-200 bg-[#fbfaf5] shadow-sm",
       ].join(" ")}
     >
-      {children}
+      <div
+        className={[
+          "w-full",
+          compact ? "aspect-[1.65/1] min-w-[420px]" : "aspect-[1.9/1] min-w-[660px]",
+        ].join(" ")}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -170,7 +176,7 @@ function GardenMapSvg({
       {gardenMapZones.map((zone) => (
         <a key={zone.code} href={zoneHref(zone)}>
           <path
-            aria-label={zone.provisionalName}
+            aria-label={zone.name}
             className={[
               zone.fillClass,
               "cursor-pointer stroke-stone-600 transition-colors",
@@ -200,19 +206,8 @@ function GardenMapSvg({
       <text fill="#44403c" fontSize="18" fontWeight="700" x="622" y="340">
         House
       </text>
-      <text fill="#57534e" fontSize="12" fontWeight="700" textAnchor="middle" x="840" y="242">
-        <tspan x="840" y="238">
-          Coach
-        </tspan>
-        <tspan x="840" y="254">
-          House
-        </tspan>
-      </text>
       <text fill="#57534e" fontSize="11" fontWeight="700" textAnchor="middle" x="386" y="304">
         Raised beds
-      </text>
-      <text fill="#57534e" fontSize="12" fontWeight="700" textAnchor="middle" x="520" y="244">
-        Patio
       </text>
       <NorthArrow />
     </svg>
@@ -226,26 +221,42 @@ function MapLabel({
   selected: boolean;
   zone: GardenMapZone;
 }) {
+  const lineHeight = 14;
+  const height = zone.mapLabel.lines.length * lineHeight + 10;
+
   return (
     <g>
-      <circle
-        cx={zone.labelPosition.x}
-        cy={zone.labelPosition.y}
+      <rect
         fill={selected ? "#047857" : "#ffffff"}
-        r="21"
+        height={height}
+        opacity={selected ? 0.96 : 0.92}
+        rx="7"
         stroke={selected ? "#064e3b" : "#57534e"}
         strokeWidth="2"
+        width={zone.mapLabel.width}
+        x={zone.labelPosition.x - zone.mapLabel.width / 2}
+        y={zone.labelPosition.y - height / 2}
       />
       <text
         dominantBaseline="middle"
         fill={selected ? "#ffffff" : "#1c1917"}
-        fontSize="20"
+        fontSize="12"
         fontWeight="800"
         textAnchor="middle"
         x={zone.labelPosition.x}
-        y={zone.labelPosition.y + 1}
       >
-        {zone.code}
+        {zone.mapLabel.lines.map((line, index) => (
+          <tspan
+            key={line}
+            x={zone.labelPosition.x}
+            y={
+              zone.labelPosition.y +
+              (index - (zone.mapLabel.lines.length - 1) / 2) * lineHeight
+            }
+          >
+            {line}
+          </tspan>
+        ))}
       </text>
     </g>
   );
