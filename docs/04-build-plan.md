@@ -183,7 +183,7 @@ Improve:
 2026-06-07 progress:
 
 - first survey-based garden map prototype added at `/garden/map`
-- Old Rectory topographic survey interpreted into provisional A-H garden zones
+- Old Rectory topographic survey interpreted into named A-I garden zones
 - overview map and per-zone detail sheets added as lightweight SVG, not a database/GIS system
 - Garden page now links to the map
 - docs updated with a map user flow and future rebadging/linking work
@@ -193,7 +193,7 @@ Still future work:
 - true offline mutation queue
 - older-photo stored thumbnail backfill
 - pagination or "load more" once real photo volume grows
-- replace provisional map letters with Ann's colloquial area names
+- confirm map-area spelling, boundaries and any later splits/merges with Ann
 - link map zones to real `garden_areas` records
 - add overlays for plants, tasks, photos and diary notes once zone names are settled
 

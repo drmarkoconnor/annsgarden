@@ -35,8 +35,8 @@ These features should not be built in MVP unless explicitly moved into scope.
 
 ### Visual garden map
 
-- first provisional survey-based map now exists at `/garden/map`
-- rename A-H zones with Ann's familiar names
+- first survey-based map now exists at `/garden/map`
+- confirm Ann's A-I area names, spellings and softened central boundaries
 - connect map zones to real garden area records
 - add "what is where" overlays for plants, tasks, photos and diary notes
 - area photo markers

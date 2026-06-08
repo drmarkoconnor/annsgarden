@@ -23,10 +23,11 @@ export function GardenMapExplorer({ selectedZone }: GardenMapExplorerProps) {
         <MapFrame>
           <GardenMapSvg selectedZone={selectedZone} />
         </MapFrame>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-9">
           {gardenMapZones.map((zone) => (
             <Link
               key={zone.code}
+              aria-label={`${zone.code}: ${zone.provisionalName}`}
               aria-current={zone.code === selectedZone.code ? "page" : undefined}
               className={[
                 "rounded-md border px-3 py-2 text-center text-sm font-semibold",
@@ -204,6 +205,9 @@ function GardenMapSvg({
       </text>
       <text fill="#57534e" fontSize="11" fontWeight="700" textAnchor="middle" x="386" y="304">
         Raised beds
+      </text>
+      <text fill="#57534e" fontSize="12" fontWeight="700" textAnchor="middle" x="520" y="244">
+        Patio
       </text>
       <NorthArrow />
     </svg>

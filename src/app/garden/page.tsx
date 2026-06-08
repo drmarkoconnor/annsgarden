@@ -65,7 +65,7 @@ export default async function GardenPage({
             Open the garden map
           </h2>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Temporary lettered areas from the Old Rectory topographic survey.
+            Named areas from the Old Rectory topographic survey.
           </p>
         </Link>
 

@@ -24,7 +24,7 @@ export default async function GardenMapPage({
           <h1 className="mt-2 text-3xl font-semibold text-stone-950">Map</h1>
           <p className="mt-1 max-w-sm text-base leading-7 text-stone-600">
             A first pass from the Old Rectory topographic survey, split into
-            temporary lettered areas.
+            current named garden areas.
           </p>
         </section>
 
