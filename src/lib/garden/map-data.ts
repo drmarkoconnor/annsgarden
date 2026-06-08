@@ -102,9 +102,9 @@ export const gardenMapZones: GardenMapZone[] = [
     labelPosition: { x: 805, y: 270 },
     path: "M710 180 L812 132 L890 190 L920 298 L842 342 L760 320 L710 280 Z",
     provisionalName: "Coach House",
-    recordFocus: ["coach house", "garage", "service yard"],
+    recordFocus: ["coach house", "hardstanding", "service yard"],
     surveyCues:
-      "North-east hardstanding and outbuilding zone marked with garage, gravel and kennel/store notes.",
+      "North-east hardstanding and Coach House zone, including gravel and kennel/store notes from the survey.",
   },
   {
     adjacent: ["F", "G"],
@@ -138,7 +138,7 @@ export const gardenMapFeatures = [
     path: "M615 286 L708 286 L708 378 L645 388 L598 346 Z",
   },
   {
-    label: "Garage",
+    label: "Coach House",
     path: "M802 190 L880 220 L902 284 L818 298 L780 236 Z",
   },
   {

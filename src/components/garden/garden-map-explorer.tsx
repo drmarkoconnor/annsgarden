@@ -200,8 +200,13 @@ function GardenMapSvg({
       <text fill="#44403c" fontSize="18" fontWeight="700" x="622" y="340">
         House
       </text>
-      <text fill="#57534e" fontSize="14" fontWeight="700" x="802" y="248">
-        Garage
+      <text fill="#57534e" fontSize="12" fontWeight="700" textAnchor="middle" x="840" y="242">
+        <tspan x="840" y="238">
+          Coach
+        </tspan>
+        <tspan x="840" y="254">
+          House
+        </tspan>
       </text>
       <text fill="#57534e" fontSize="11" fontWeight="700" textAnchor="middle" x="386" y="304">
         Raised beds
